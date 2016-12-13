@@ -15,10 +15,11 @@ import pandas_datareader.data as web
 import datetime
 from dateutil import parser
 from dateutil.parser import parse
+from random import randint
 
 def GetQuo(sear_comp_id):
 	start = datetime.datetime.strptime('01/01/2000', '%m/%d/%Y')
-	end = datetime.datetime.strptime('11/07/2016', '%m/%d/%Y')
+	end = datetime.datetime.strptime('12/12/2016', '%m/%d/%Y')
 	file.write("\nGetQuo 開始擷取 " + sear_comp_id +"  日期區間:" + str(start) + "~" + str(end) + "股價報價資料.\n")
 	print("\nGetQuo 開始擷取 " + sear_comp_id +"  日期區間:" + str(start) + "~" + str(end) + "股價報價資料.\n")
 	
@@ -84,8 +85,8 @@ def GetQuo(sear_comp_id):
 					file.write("insert into STOCK_QUO er=" + er.args[0] + "\n")
 					file.write(sear_comp_id + " " + quo_date + "資料寫入異常...Rollback!\n")
 					conn.execute("rollback")
-			else:
-				print(sear_comp_id + " " + quo_date + "報價資料已存在!\n")
+			#else:
+				#print(sear_comp_id + " " + quo_date + "報價資料已存在!\n")
 				#file.write("\n" + sear_comp_id + " " + quo_date + "報價資料已存在!\n")
 
 			# 關閉cursor
@@ -162,7 +163,7 @@ conn = sqlite3.connect("market_price.sqlite")
 # 從上市公司清單中，讀取需要更新股價資料的公司
 sqlstr  = "select comp_id, sear_comp_id from STOCK_COMP_LIST "
 sqlstr += "where "
-sqlstr += "latest_quo_date <= '20161107' "
+sqlstr += "latest_quo_date < '20161212' "
 sqlstr += "order by comp_id "
 #sqlstr += "limit 2"
 
@@ -176,8 +177,12 @@ if re_len > 0:
 	for row in result:
 		sear_comp_id = row[1]
 		#print(row[1])
-
 		GetQuo(sear_comp_id)
+		
+		# 隨機等待3~9秒的時間
+		#random_sec = randint(1,3)
+		#print("Waiting sec=" + str(random_sec))
+		#time.sleep(random_sec)
 else:
 	file.write(sear_comp_id + "無須更新資料或無該公司資料...\n")
 	print(sear_comp_id + "無須更新資料或無該公司資料...")
