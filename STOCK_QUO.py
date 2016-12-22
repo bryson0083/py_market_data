@@ -19,7 +19,7 @@ from random import randint
 
 def GetQuo(sear_comp_id):
 	start = datetime.datetime.strptime('01/01/2000', '%m/%d/%Y')
-	end = datetime.datetime.strptime('12/12/2016', '%m/%d/%Y')
+	end = datetime.datetime.strptime('12/13/2016', '%m/%d/%Y')
 	file.write("\nGetQuo 開始擷取 " + sear_comp_id +"  日期區間:" + str(start) + "~" + str(end) + "股價報價資料.\n")
 	print("\nGetQuo 開始擷取 " + sear_comp_id +"  日期區間:" + str(start) + "~" + str(end) + "股價報價資料.\n")
 	
@@ -131,12 +131,23 @@ def GetQuo(sear_comp_id):
 			file.write(sear_comp_id + " " + quo_date + "報價資料寫入成功.\n")
 
 	except:
+		NoQuo(sear_comp_id)
 		print("@Err. GetQuo sear id=" + sear_comp_id +"  " + str(start) + "~" + str(end)+"\n")
 		print("無法讀取YAHOO股價資料，或無資料!!")
 		file.write("@Err. GetQuo sear id=" + sear_comp_id +"  " + str(start) + "~" + str(end)+"\n")
 		file.write("無法讀取YAHOO股價資料，或無資料!!\n")
 
-
+def NoQuo(sear_comp_id):
+	strsql  = "update STOCK_COMP_LIST set "
+	strsql += "LATEST_QUO_DATE = 'NA' "
+	strsql += "where sear_comp_id = '" + sear_comp_id + "'"
+	
+	try:
+		conn.execute(strsql)
+	except sqlite3.Error as er:
+		print("update STOCK_COMP_LIST in NoQuo er=" + er.args[0] + "\n")
+		file.write("@Err. NoQuo sear id=" + sear_comp_id +"  " + "\n")
+		conn.execute("rollback")
 
 
 # 寫入LOG File
@@ -163,9 +174,11 @@ conn = sqlite3.connect("market_price.sqlite")
 # 從上市公司清單中，讀取需要更新股價資料的公司
 sqlstr  = "select comp_id, sear_comp_id from STOCK_COMP_LIST "
 sqlstr += "where "
-sqlstr += "latest_quo_date < '20161212' "
+sqlstr += "length(SEAR_COMP_ID) < 8 and "
+sqlstr += "latest_quo_date <> 'NA' and "
+sqlstr += "latest_quo_date < '20161213' "
 sqlstr += "order by comp_id "
-#sqlstr += "limit 2"
+sqlstr += "limit 100"
 
 cursor = conn.execute(sqlstr)
 result = cursor.fetchall()
