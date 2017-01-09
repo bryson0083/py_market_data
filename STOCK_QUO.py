@@ -18,8 +18,8 @@ from dateutil.parser import parse
 from random import randint
 
 def GetQuo(sear_comp_id):
-	start = datetime.datetime.strptime('01/01/2000', '%m/%d/%Y')
-	end = datetime.datetime.strptime('12/13/2016', '%m/%d/%Y')
+	start = datetime.datetime.strptime('12/01/2016', '%m/%d/%Y')
+	end = datetime.datetime.strptime('01/03/2017', '%m/%d/%Y')
 	file.write("\nGetQuo 開始擷取 " + sear_comp_id +"  日期區間:" + str(start) + "~" + str(end) + "股價報價資料.\n")
 	print("\nGetQuo 開始擷取 " + sear_comp_id +"  日期區間:" + str(start) + "~" + str(end) + "股價報價資料.\n")
 	
@@ -176,9 +176,9 @@ sqlstr  = "select comp_id, sear_comp_id from STOCK_COMP_LIST "
 sqlstr += "where "
 sqlstr += "length(SEAR_COMP_ID) < 8 and "
 sqlstr += "latest_quo_date <> 'NA' and "
-sqlstr += "latest_quo_date < '20161213' "
+sqlstr += "latest_quo_date < '20170103' "
 sqlstr += "order by comp_id "
-sqlstr += "limit 100"
+#sqlstr += "limit 100"
 
 cursor = conn.execute(sqlstr)
 result = cursor.fetchall()
