@@ -74,8 +74,8 @@ def DailyQuoCSV(sear_date):
 	return flag
 
 # 起訖日期
-start_date = "2004/02/11"
-end_date = "2016/12/31"
+start_date = "2011/01/01"
+end_date = "2017/01/11"
 
 str_date = str(datetime.datetime.now())
 str_date = parser.parse(str_date).strftime("%Y%m%d")

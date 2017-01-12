@@ -58,7 +58,7 @@ def mode_c():
 	elif mmdd == "0905":
 		qq = "02"
 	elif mmdd == "1205":
-	#elif mmdd == "1027":
+	#elif mmdd == "0112":
 		qq = "03"
 	else:
 		file.write("mode_c 未到批次結轉時間，執行結束...\n")
@@ -120,7 +120,7 @@ def MOPS_YQ_2(arg_yyy, arg_qq):
 	conn = sqlite3.connect('market_price.sqlite')
 
 	# 建立網頁讀取
-	driver = webdriver.Firefox()
+	driver = webdriver.Chrome()
 	driver.get("http://mops.twse.com.tw/mops/web/t163sb05")
 
 	# 查詢網頁條件參數
