@@ -25,7 +25,7 @@ def DailyQuoCSV(sear_date):
 		# 讀取查詢頁面
 		r = session.get("http://www.tse.com.tw/ch/trading/exchange/MI_INDEX/MI_INDEX.php", headers=headers)
 		
-		sleep_sec = randint(5,9)
+		sleep_sec = randint(3,5)
 		print("waiting " + str(sleep_sec) + " secs.")
 		#time.sleep(5)
 		time.sleep(sleep_sec)
@@ -66,17 +66,30 @@ def DailyQuoCSV(sear_date):
 			#close file
 			f.close()
 			
-			sleep_sec = randint(5,9)
+			sleep_sec = randint(3,5)
 			print("waiting " + str(sleep_sec) + " secs.")
 			time.sleep(sleep_sec)
 	else:
 		print(sear_date + "資料檔已存在，不再更新資料.")
 	return flag
 
-# 起訖日期
-start_date = "2011/01/01"
-end_date = "2017/01/11"
+#起訖日期(預設跑當天日期到往前推7天)
+str_date = str(datetime.datetime.now())
+str_date = parser.parse(str_date).strftime("%Y/%m/%d")
+end_date = str_date
 
+date_1 = datetime.datetime.strptime(end_date, "%Y/%m/%d")
+start_date = date_1 + datetime.timedelta(days=-7)
+start_date = str(start_date)[0:10]
+start_date = parser.parse(start_date).strftime("%Y/%m/%d")
+
+#for需要時手動設定日期區間用
+#start_date = "2014/01/01"
+#end_date = "2017/01/15"
+
+print("結轉日期" + start_date + "~" + end_date)
+
+#LOG檔
 str_date = str(datetime.datetime.now())
 str_date = parser.parse(str_date).strftime("%Y%m%d")
 name = "TSE_QUO_LOG_" + str_date + ".txt"
@@ -120,10 +133,10 @@ while i <= (int_diff_date+1):
 	dt = dt + relativedelta(days=1)
 	i += 1
 	
-	# 累計抓滿有收盤資料30天就強制跳出迴圈
-	if cnt == 30:
-		print("抓滿30天，強制結束.")
-		file.write("抓滿30天，強制結束.\n")
+	# 累計抓滿有收盤資料90天就強制跳出迴圈
+	if cnt == 90:
+		print("抓滿90天，強制結束.")
+		file.write("抓滿90天，強制結束.\n")
 		break
 
 tEnd = time.time()#計時結束

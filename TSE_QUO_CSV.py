@@ -209,8 +209,8 @@ def TSE_QUO_DB(arg_df, arg_date):
 # main                                             #
 ####################################################
 #起訖日期
-start_date = "2016/01/01"
-end_date = "2016/12/31"
+start_date = "2004/02/11"
+end_date = "2017/01/16"
 
 # 寫入LOG File
 dt=datetime.datetime.now()

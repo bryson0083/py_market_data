@@ -90,7 +90,7 @@ def mode_h():
 # 跑特定區間，結轉資料(自行修改參數條件)
 def mode_a():
 
-	for y in range(2015,2017,1):
+	for y in range(2013,2014,1):
 		#print("y=" + str(y))
 		yyy = str(y - 1911)
 		q = 1
@@ -225,7 +225,7 @@ def MOPS_YQ_2(arg_yyy, arg_qq):
 					sqlstr = sqlstr + "'" + date_last_maint + "',"
 					sqlstr = sqlstr + "'" + time_last_maint + "',"
 					sqlstr = sqlstr + "'" + prog_last_maint + "' "
-					sqlstr = sqlstr + ") "
+					sqlstr 	= sqlstr + ") "
 
 				else:
 					sqlstr = "update MOPS_YQ set "
