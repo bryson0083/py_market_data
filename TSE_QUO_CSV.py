@@ -208,9 +208,19 @@ def TSE_QUO_DB(arg_df, arg_date):
 ####################################################
 # main                                             #
 ####################################################
-#起訖日期
-start_date = "2004/02/11"
-end_date = "2017/01/16"
+#起訖日期(預設跑當天日期到往前推7天)
+str_date = str(datetime.datetime.now())
+str_date = parser.parse(str_date).strftime("%Y/%m/%d")
+end_date = str_date
+
+date_1 = datetime.datetime.strptime(end_date, "%Y/%m/%d")
+start_date = date_1 + datetime.timedelta(days=-7)
+start_date = str(start_date)[0:10]
+start_date = parser.parse(start_date).strftime("%Y/%m/%d")
+
+#for需要時手動設定日期區間用
+#start_date = "2016/07/07"
+#end_date = "2017/01/16"
 
 # 寫入LOG File
 dt=datetime.datetime.now()
