@@ -19,15 +19,19 @@ import sqlite3
 import time
 import sys
 
+############################################################################
+# Main                                                                     #
+############################################################################
+print("Executing STOCK_COMP_LIST_V2...")
+
 # 寫入LOG File
 dt=datetime.datetime.now()
 print("##############################################")
-print("##      台灣證券交易所~上市公司清單讀取       ##")
+print("##      台灣證券交易所~上市公司清單讀取     ##")
 print("##                                          ##")
 print("##                                          ##")
 print("##   datetime: " + str(dt) +            "   ##")
 print("##############################################")
-
 str_date = str(dt)
 str_date = parser.parse(str_date).strftime("%Y%m%d")
 
@@ -151,4 +155,5 @@ file.write("*** End LOG ***\n")
 
 # Close File
 file.close()
-print ("end of prog...")
+
+print ("End of prog...")

@@ -264,7 +264,10 @@ def MOPS_YQ_2(arg_yyy, arg_qq):
 	file.write("擷取資料完畢 ...\n")
 	print ("擷取資料完畢 ...")
 
-
+############################################################################
+# Main                                                                     #
+############################################################################
+print("Executing MOPS_YQ_2...")
 
 try:
 	run_mode = sys.argv[1]
@@ -312,3 +315,5 @@ file.write("*** End LOG ***\n")
 
 # Close File
 file.close()
+
+print ("End of prog...")

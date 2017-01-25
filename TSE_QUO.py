@@ -73,6 +73,11 @@ def DailyQuoCSV(sear_date):
 		print(sear_date + "資料檔已存在，不再更新資料.")
 	return flag
 
+############################################################################
+# Main                                                                     #
+############################################################################
+print("Executing TSE_QUO...")
+
 #起訖日期(預設跑當天日期到往前推7天)
 str_date = str(datetime.datetime.now())
 str_date = parser.parse(str_date).strftime("%Y/%m/%d")

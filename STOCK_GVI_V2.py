@@ -249,16 +249,17 @@ def store_db(arg_df, arg_date):
 	else:
 		conn.execute("rollback")
 
-#############################################
-# Main                                      #
-#############################################
+############################################################################
+# Main                                                                     #
+############################################################################
+print("Executing STOCK_GVI_V2...")
 
 dt = datetime.datetime.now()
 str_date = parser.parse(str(dt)).strftime("%Y%m%d")
 print(str_date)
 
 #for 手動跑
-#str_date = "20170103"
+#str_date = "20170124"
 
 #建立資料庫連線
 conn = sqlite3.connect("market_price.sqlite")
@@ -383,3 +384,5 @@ cursor.close()
 
 #關閉資料庫連線
 conn.close
+
+print("End of prog...")
