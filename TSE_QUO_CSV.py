@@ -121,6 +121,13 @@ def TSE_QUO_DB(arg_df, arg_date):
 		if q_close == "--":
 			q_close = 0
 		
+		#原始CSV中，有部分股票，當天有交易，但是沒有任何成交量
+		#因此這些股票的當天交易資料，不寫入資料庫
+		if float(q_close) > 0 and int(q_vol) > 0:
+			insert_yn = "Y"
+		else:
+			insert_yn = "N"
+
 		#檢查資料是否已存在
 		strsql  = "select count(*) from STOCK_QUO "
 		strsql += "where QUO_DATE = '" + quo_date + "' and "
@@ -133,36 +140,37 @@ def TSE_QUO_DB(arg_df, arg_date):
 		if result[0] == 0:
 			#print(comp_id + "沒資料\n")
 			# 日報價資料寫入
-			strsql  = "insert into STOCK_QUO ("
-			strsql += "SEAR_COMP_ID,QUO_DATE,OPEN,HIGH,LOW,"
-			strsql += "CLOSE,VOL,ADJ_CLOSE,PER,"
-			strsql += "DATE_LAST_MAINT,TIME_LAST_MAINT,PROG_LAST_MAINT"
-			strsql += ") values ("
-			strsql += "'" + comp_id + "',"
-			strsql += "'" + quo_date + "',"
-			strsql += str(q_open) + ","
-			strsql += str(q_high) + ","
-			strsql += str(q_low) + ","
-			strsql += str(q_close) + ","
-			strsql += str(q_vol) + ","
-			strsql += "0,"
-			strsql += str(q_per) + ","
-			strsql += "'" + date_last_maint + "',"
-			strsql += "'" + time_last_maint + "',"
-			strsql += "'" + prog_last_maint + "' "
-			strsql += ")"
-			
-			try:
-				#print(strsql + "\n")
-				conn.execute(strsql)
-			except sqlite3.Error as er:
-				commit_flag = "N"
-				print("insert into STOCK_QUO er=" + er.args[0] + "\n")
-				print(comp_id + " " + comp_name + " " + quo_date + "資料寫入異常...Rollback!\n")
-				file.write("insert into STOCK_QUO er=" + er.args[0] + "\n")
-				file.write(strsql + "\n")
-				file.write(comp_id + " " + comp_name + " " + quo_date + "資料寫入異常...Rollback!\n")
-				conn.execute("rollback")
+			if insert_yn == "Y":
+				strsql  = "insert into STOCK_QUO ("
+				strsql += "SEAR_COMP_ID,QUO_DATE,OPEN,HIGH,LOW,"
+				strsql += "CLOSE,VOL,ADJ_CLOSE,PER,"
+				strsql += "DATE_LAST_MAINT,TIME_LAST_MAINT,PROG_LAST_MAINT"
+				strsql += ") values ("
+				strsql += "'" + comp_id + "',"
+				strsql += "'" + quo_date + "',"
+				strsql += str(q_open) + ","
+				strsql += str(q_high) + ","
+				strsql += str(q_low) + ","
+				strsql += str(q_close) + ","
+				strsql += str(q_vol) + ","
+				strsql += "0,"
+				strsql += str(q_per) + ","
+				strsql += "'" + date_last_maint + "',"
+				strsql += "'" + time_last_maint + "',"
+				strsql += "'" + prog_last_maint + "' "
+				strsql += ")"
+				
+				try:
+					#print(strsql + "\n")
+					conn.execute(strsql)
+				except sqlite3.Error as er:
+					commit_flag = "N"
+					print("insert into STOCK_QUO er=" + er.args[0] + "\n")
+					print(comp_id + " " + comp_name + " " + quo_date + "資料寫入異常...Rollback!\n")
+					file.write("insert into STOCK_QUO er=" + er.args[0] + "\n")
+					file.write(strsql + "\n")
+					file.write(comp_id + " " + comp_name + " " + quo_date + "資料寫入異常...Rollback!\n")
+					conn.execute("rollback")
 			
 		else:
 			#print(comp_id + "有資料\n")
