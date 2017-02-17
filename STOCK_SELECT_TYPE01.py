@@ -81,12 +81,12 @@ def JUG_STOCK_QUO(sear_comp_id, str_prev_date, str_today, arg_mode):
 	#計算移動平均(ma18)
 	ma18 = talib.MA(close, timeperiod=18, matype=0)
 
-	#計算移動平均(ma55)
-	ma55 = talib.MA(close, timeperiod=55, matype=0)
+	#計算移動平均(ma50)
+	ma50 = talib.MA(close, timeperiod=50, matype=0)
 
 	#print(close)
 	#print(ma18)
-	#print(ma55)
+	#print(ma50)
 
 	#均線 18 ma 值導到dataframe
 	df['ma18'] = ma18
@@ -94,14 +94,14 @@ def JUG_STOCK_QUO(sear_comp_id, str_prev_date, str_today, arg_mode):
 	#計算均線值與前一天的差(作為變動方向)
 	df['ma18_diff_yesterday'] = df['ma18'] - df['ma18'].shift(1)
 
-	#均線 55 ma 值導到dataframe
-	df['ma55'] = ma55
+	#均線 50 ma 值導到dataframe
+	df['ma50'] = ma50
 
 	#計算均線值與前一天的差(作為變動方向)
-	df['ma55_diff_yesterday'] = df['ma55'] - df['ma55'].shift(1)
+	df['ma50_diff_yesterday'] = df['ma50'] - df['ma50'].shift(1)
 
 	#計算均線間的距離(以百分比表示)
-	df['dist_ma_pct'] = abs((df['ma55'] - df['ma18']) / df['ma18'] * 100)
+	df['dist_ma_pct'] = abs((df['ma50'] - df['ma18']) / df['ma18'] * 100)
 
 	#檢查最新的三天ma18資料是否連三漲
 	ma18_cnt_tot = len(df['ma18'])
@@ -111,27 +111,27 @@ def JUG_STOCK_QUO(sear_comp_id, str_prev_date, str_today, arg_mode):
 	ma18_increment_yn = CHK_IS_CONTINUE_UP(df_a)
 	#print("ma18_increment_yn=" + ma18_increment_yn)
 
-	#檢查最新的三天ma55資料是否連三漲
-	ma55_cnt_tot = len(df['ma55'])
-	df_a = df['ma55'][ma55_cnt_tot-4:ma55_cnt_tot]
+	#檢查最新的三天ma50資料是否連三漲
+	ma50_cnt_tot = len(df['ma50'])
+	df_a = df['ma50'][ma50_cnt_tot-4:ma50_cnt_tot]
 	#print(df_a)
-	ma55_increment_yn = CHK_IS_CONTINUE_UP(df_a)
-	#print("ma55_increment_yn=" + ma55_increment_yn)
+	ma50_increment_yn = CHK_IS_CONTINUE_UP(df_a)
+	#print("ma50_increment_yn=" + ma50_increment_yn)
 
-	#最新一筆ma18大於ma55
+	#最新一筆ma18大於ma50
 	ma18_last = float(df['ma18'].tail(1))
-	ma55_last = float(df['ma55'].tail(1))
+	ma50_last = float(df['ma50'].tail(1))
 	
-	ma18bt55_yn = "N"
-	if ma18_last > ma55_last:
-		ma18bt55_yn = "Y"
+	ma18bt50_yn = "N"
+	if ma18_last > ma50_last:
+		ma18bt50_yn = "Y"
 
 	"""
 	# for test 運算結果寫入EXCEL檔
 	if sear_comp_id == "1220.TW":
 		print("ma18_increment_yn=" + ma18_increment_yn)
-		print("ma55_increment_yn=" + ma55_increment_yn)
-		print("ma18bt55_yn=" + ma18bt55_yn)
+		print("ma50_increment_yn=" + ma50_increment_yn)
+		print("ma18bt50_yn=" + ma18bt50_yn)
 		file_name = 'ma_sel_' + sear_comp_id + '.xlsx'
 		writer = pd.ExcelWriter(file_name, engine='xlsxwriter')
 		df.to_excel(writer, sheet_name='stock', index=False)
@@ -139,7 +139,7 @@ def JUG_STOCK_QUO(sear_comp_id, str_prev_date, str_today, arg_mode):
 	"""
 
 	#最後總評
-	if ma18_increment_yn == "Y" and ma55_increment_yn == "Y" and ma18bt55_yn == "Y":
+	if ma18_increment_yn == "Y" and ma50_increment_yn == "Y" and ma18bt50_yn == "Y":
 		JUG_STOCK_QUO = "Y"
 	else:
 		JUG_STOCK_QUO = "N"
