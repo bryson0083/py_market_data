@@ -71,9 +71,9 @@ start_date = str(start_date)[0:10]
 start_date = parser.parse(start_date).strftime("%Y/%m/%d")
 
 #for需要時手動設定日期區間用
-start_date = "2007/07/01"
+#start_date = "2007/07/01"
 #start_date = "2017/02/01"
-end_date = "2017/02/16"
+#end_date = "2017/02/16"
 
 print("結轉日期" + start_date + "~" + end_date)
 
