@@ -166,11 +166,10 @@ print(str_prev_date)
 #建立資料庫連線
 conn = sqlite3.connect("market_price.sqlite")
 
-strsql  = "select distinct SEAR_COMP_ID from STOCK_QUO "
-strsql += "where "
+strsql  = "select SEAR_COMP_ID from STOCK_COMP_LIST "
+#strsql += "where "
 #strsql += "QUO_DATE between '" + str_prev_date + "' and '" + str_today + "' "
-strsql += "QUO_DATE = '" + str_today + "' "
-strsql += "order by SEAR_COMP_ID "
+strsql += "order by STOCK_TYPE, SEAR_COMP_ID "
 #strsql += "limit 1 "
 
 cursor = conn.execute(strsql)
@@ -183,14 +182,16 @@ if re_len > 0:
 	for row in result:
 		#print(row[0])
 
-		strsql  = "select COMP_NAME from STOCK_COMP_LIST where SEAR_COMP_ID = '" + row[0] + "'"
+		strsql  = "select COMP_NAME, STOCK_TYPE from STOCK_COMP_LIST where SEAR_COMP_ID = '" + row[0] + "'"
 		cursor2 = conn.execute(strsql)
 		result2 = cursor2.fetchone()
 
 		if result2 is not None:
 			comp_name = result2[0]
+			stock_type = result2[1]
 		else:
 			comp_name = "NA"
+			stock_type = "NA"
 
 		#關閉cursor
 		cursor2.close()
@@ -213,15 +214,15 @@ if re_len > 0:
 		#if select_d_yn == "Y":
 		if select_d_yn == "Y" and select_w_yn == "Y" and select_m_yn == "Y":
 			i += 1
-			ls_stk_select.append([row[0],comp_name])
-			print("選出股票=" + row[0] + "  " + comp_name)
+			ls_stk_select.append([row[0],comp_name,stock_type])
+			print("選出股票=" + row[0] + "  " + comp_name + "  " + stock_type)
 
 
 print("共選出" + str(i) + "檔股票...\n")
 #print(ls_stk_select)
 
 #ls_stk_select list拋到pandas
-df = pd.DataFrame(ls_stk_select, columns = ['股票編號','公司名稱'])
+df = pd.DataFrame(ls_stk_select, columns = ['股票編號','公司名稱','類別'])
 #print(df)
 
 #運算結果寫入EXCEL檔

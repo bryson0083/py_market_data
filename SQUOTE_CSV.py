@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 """
-Created on Mon Jan  9 09:11:25 2017
+Created on Mon Feb 21 09:11:25 2017
 
 @author: bryson0083
 """
@@ -13,13 +13,13 @@ import os
 import sqlite3
 import time
 
-def TSE_QUO_READ_CSV(arg_date):
+def SQUOTE_READ_CSV(arg_date):
 	# 轉民國年日期
 	str_date = str(int(arg_date[0:4]) - 1911) + arg_date[4:]
 	str_date = str_date.replace("/","")
 	print("讀取" + str_date + "收盤資料.\n")
 	
-	file_name = "./tse_quo_data/" + str_date + ".csv"
+	file_name = "./squote_data/" + str_date + ".csv"
 	
 	#判斷CSV檔案是否存在，若無檔案則跳回主程式
 	is_existed = os.path.exists(file_name)
@@ -46,13 +46,13 @@ def TSE_QUO_READ_CSV(arg_date):
 				print(arg_date + "當天未開盤，無交易資料.\n")
 				return
 	
-	#取得要讀取的資料起點位置(識別"證券代號")
+	#取得要讀取的資料起點位置(識別"代號")
 	st_idx = 0
 	i = 0
 	for item in quo_list:
 		#print("i=" + str(i) + "\n")
 		for j in item:
-			if j == "證券代號":
+			if j == "代號":
 				st_idx = i
 				#print("start from " + str(i) + "\n")
 		i += 1
@@ -61,29 +61,36 @@ def TSE_QUO_READ_CSV(arg_date):
 	i = 0
 	idx = st_idx
 	all_data = []
+	tot_cnt = len(quo_list)
 	while True:
 		#for item in quo_list[idx]:
 		#	print(item)
 		
-		# 判斷若list長度不滿16，跳出迴圈
-		if len(quo_list[idx]) != 16:
+		# 判斷檔案尾部或list長度不滿15，跳出迴圈
+		if (idx == tot_cnt) or (len(quo_list[idx]) != 15):
 			break
-			
-		data = [str(item) for item in quo_list[idx]]
-		all_data.append(data)
+		
+		data = [str(item).replace(",","").strip() for item in quo_list[idx]]
+		id_c2 = str(quo_list[idx][0][0:2])
+		
+		#受益證券、權證不要
+		if ((id_c2 == "01") or (id_c2 == "70")):
+			pass
+		else:
+			all_data.append(data)
 		
 		idx += 1
 		i += 1
 	
 	#all_data list拋到pandas
 	df = pd.DataFrame(all_data[1:], columns = all_data[0])
-	df2 = df.loc[:,['證券代號', '證券名稱', '開盤價', '最高價', '最低價', '收盤價', '成交股數', '本益比']]
+	df2 = df.loc[:,['代號', '名稱', '收盤', '開盤', '最高', '最低', '成交股數']]
 	#print(df2)
 	
 	#寫入、更新資料庫
-	TSE_QUO_DB(df2, arg_date)
+	SQUOTE_DB(df2, arg_date)
 	
-def TSE_QUO_DB(arg_df, arg_date):
+def SQUOTE_DB(arg_df, arg_date):
 	#print(arg_df)
 	quo_date = arg_date.replace("/", "")
 	
@@ -94,31 +101,30 @@ def TSE_QUO_DB(arg_df, arg_date):
 	for i in range(0,len(arg_df)):
 		#print(str(df.index[i]))
 		comp_id = str(arg_df.iloc[i][0])
-		comp_id = comp_id.replace('"','').replace("=","").strip() + ".TW"
+		comp_id = comp_id.strip() + ".TW"
 		
 		comp_name = str(arg_df.iloc[i][1])
-		q_open = arg_df.iloc[i][2]	# 開盤價
-		q_high = arg_df.iloc[i][3]	# 最高價
-		q_low = arg_df.iloc[i][4]	# 最低價
-		q_close = arg_df.iloc[i][5]	# 收盤價
+		q_close = arg_df.iloc[i][2]	# 收盤價
+		q_open = arg_df.iloc[i][3]	# 開盤價
+		q_high = arg_df.iloc[i][4]	# 最高價
+		q_low = arg_df.iloc[i][5]	# 最低價
 		q_vol = arg_df.iloc[i][6]	# 成交量
-		q_per = str(arg_df.iloc[i][7])	# 本益比
 		#print(comp_id + "#" + comp_name + "#" + str(q_open) + "#" + str(q_high) + "#" + str(q_low) + "#" + str(q_close) + "#" + str(q_vol) + "#" + str(q_per) + "#\n")
 		
 		# 最後維護日期時間
 		str_date = str(datetime.datetime.now())
 		date_last_maint = parser.parse(str_date).strftime("%Y%m%d")
 		time_last_maint = parser.parse(str_date).strftime("%H%M%S")
-		prog_last_maint = "TSE_QUO_CSV"
+		prog_last_maint = "SQUOTE_CSV"
 		
 		#處理若資料為"--"時，給予預設值0
-		if q_open == "--":
+		if q_open == "----":
 			q_open = 0
-		if q_high == "--":
+		if q_high == "----":
 			q_high = 0
-		if q_low == "--":
+		if q_low == "----":
 			q_low = 0
-		if q_close == "--":
+		if q_close == "----":
 			q_close = 0
 		
 		#原始CSV中，有部分股票，當天有交易，但是沒有任何成交量
@@ -127,7 +133,7 @@ def TSE_QUO_DB(arg_df, arg_date):
 			insert_yn = "Y"
 		else:
 			insert_yn = "N"
-
+		
 		#檢查資料是否已存在
 		strsql  = "select count(*) from STOCK_QUO "
 		strsql += "where QUO_DATE = '" + quo_date + "' and "
@@ -154,7 +160,7 @@ def TSE_QUO_DB(arg_df, arg_date):
 				strsql += str(q_close) + ","
 				strsql += str(q_vol) + ","
 				strsql += "0,"
-				strsql += str(q_per) + ","
+				strsql += "0,"
 				strsql += "'" + date_last_maint + "',"
 				strsql += "'" + time_last_maint + "',"
 				strsql += "'" + prog_last_maint + "' "
@@ -181,7 +187,6 @@ def TSE_QUO_DB(arg_df, arg_date):
 			strsql += "LOW=" + str(q_low) + ","
 			strsql += "CLOSE=" + str(q_close) + ","
 			strsql += "VOL=" + str(q_vol) + ","
-			strsql += "PER=" + str(q_per) + ","
 			strsql += "DATE_LAST_MAINT='" + date_last_maint + "',"
 			strsql += "TIME_LAST_MAINT='" + time_last_maint + "',"
 			strsql += "PROG_LAST_MAINT='" + prog_last_maint + "' "
@@ -216,7 +221,7 @@ def TSE_QUO_DB(arg_df, arg_date):
 ############################################################################
 # Main                                                                     #
 ############################################################################
-print("Executing TSE_QUO_CSV...")
+print("Executing SQUOTE_CSV...")
 
 #起訖日期(預設跑當天日期到往前推7天)
 str_date = str(datetime.datetime.now())
@@ -229,15 +234,15 @@ start_date = str(start_date)[0:10]
 start_date = parser.parse(start_date).strftime("%Y/%m/%d")
 
 #for需要時手動設定日期區間用
-#start_date = "2016/07/07"
-#end_date = "2017/01/16"
+#start_date = "2007/04/23"
+#end_date = "2017/02/20"
 
 # 寫入LOG File
 dt=datetime.datetime.now()
 str_date = str(dt)
 str_date = parser.parse(str_date).strftime("%Y%m%d")
 
-name = "TSE_QUO_CSV_LOG_" + str_date + ".txt"
+name = "SQUOTE_CSV_LOG_" + str_date + ".txt"
 file = open(name, 'a', encoding = 'UTF-8')
 
 tStart = time.time()#計時開始
@@ -262,8 +267,9 @@ while i <= int_diff_date:
 		str_date = parser.parse(str(dt)).strftime("%Y/%m/%d")
 		
 	#print(str_date + "\n")
+	
 	#讀取日期當天報價CSV檔
-	TSE_QUO_READ_CSV(str_date)
+	SQUOTE_READ_CSV(str_date)
 	
 	#日期往後推一天
 	dt = datetime.datetime.strptime(str_date, date_fmt).date()
