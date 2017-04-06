@@ -4,6 +4,7 @@ python STOCK_GVI_FB.py
 
 call activate py34
 python STOCK_SELECT_TYPE01.py
+python STOCK_SELECT_TYPE02.py
 call deactivate
 
 pause

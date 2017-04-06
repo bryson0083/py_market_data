@@ -6,7 +6,7 @@
 # last_modify: 2016/11/01
 #
 
-#import
+import os
 import sys
 import sqlite3
 import datetime
@@ -14,6 +14,7 @@ import datetime
 import os.path
 import time
 import re 
+import pandas as pd
 
 from selenium import webdriver
 from selenium.webdriver.common.by import By
@@ -49,27 +50,27 @@ def mode_c():
 	# 4.保險業申報期限：第一季為5月15日，第二季為8月31日，第三季為11月14日，年度為3月31日。
 	# 5.證券業申報期限：第一季為5月15日，第二季為8月31日，第三季為11月14日，年度為3月31日。
 
+	#mmdd = "1206"
 	# 只在以下特定幾天結轉季報資料
-#	if mmdd == "0405":
-	if mmdd == "0322":
+	if mmdd >= "0315" and mmdd <= "0405":
 		yyy = str(int(yyy) - 1)
 		qq = "04"
-	elif mmdd == "0605":
+	elif mmdd >= "0515" and mmdd <= "0605":
 		qq = "01"
-	elif mmdd == "0905":
+	elif mmdd >= "0814" and mmdd <= "0905":
 		qq = "02"
-	elif mmdd == "1205":
-	#elif mmdd == "0112":
+	elif mmdd >= "1114" and mmdd <= "1205":
 		qq = "03"
 	else:
-		file.write("mode_c 未到批次結轉時間，執行結束...\n")
-		sys.exit(mmdd + " No need to get data.")
+		file.write("mode_c: 未到批次結轉時間，執行結束...\n")
+		sys.exit("mode_c: date=" + mmdd + " 未到批次結轉時間，執行結束...")
 
-	file.write("mode_c 自動抓取當季 yyyqq=" + yyy + qq + "\n")
-	print("mode_c 自動抓取當季 yyyqq=" + yyy + qq)
+	file.write("mode_c: 自動抓取當季 yyyqq=" + yyy + qq + "\n")
+	print("mode_c: 自動抓取當季 yyyqq=" + yyy + qq)
 
-	MOPS_YQ_2(yyy, qq)
-
+	# 開始抓取資料
+	MOPS_YQ_2(yyy, qq, "sii")
+	MOPS_YQ_2(yyy, qq, "otc")
 
 
 # 手動輸入條件結轉資料
@@ -81,17 +82,19 @@ def mode_h():
 	yyy = str(int(yyyy) - 1911)
 
 	# 寫入LOG File
-	file.write("mode_h 手動結轉 yyyqq=" + yyy + qq + "\n")
-	print("mode_h 手動結轉 yyyqq=" + yyy + qq)
+	file.write("mode_h: 手動結轉 yyyqq=" + yyy + qq + "\n")
+	print("mode_h: 手動結轉 yyyqq=" + yyy + qq)
 
-	MOPS_YQ_2(yyy, qq)
+	# 開始抓取資料
+	MOPS_YQ_2(yyy, qq, "sii")
+	MOPS_YQ_2(yyy, qq, "otc")
 
 
 
 # 跑特定區間，結轉資料(自行修改參數條件)
 def mode_a():
-
-	for y in range(2013,2014,1):
+	#證交所最早的資料(IFRS後)從102年第一季開始提供
+	for y in range(2015,2017,1):
 		#print("y=" + str(y))
 		yyy = str(y - 1911)
 		q = 1
@@ -105,21 +108,88 @@ def mode_a():
 			else:
 				qq = "04"
 
-			file.write("mode_a 特定區間，結轉yyyqq=" + yyy + qq + "\n")
-			print("mode_a 特定區間，結轉yyyqq=" + yyy + qq)
-			MOPS_YQ_2(yyy, qq)
+			file.write("mode_a: 特定區間，結轉yyyqq=" + yyy + qq + "\n")
+			print("mode_a: 特定區間，結轉yyyqq=" + yyy + qq)
+
+			# 開始抓取資料
+			#MOPS_YQ_2(yyy, qq, "sii")
+			#MOPS_YQ_2(yyy, qq, "otc")
 
 			q += 1
 
+def proc_db(df, yyyy, qq):
+	#有錯誤出現時，設定err_flag=True作為識別
+	global err_flag
+
+	for i in range(0,len(df)):
+		#print(str(df.index[i]))
+		comp_id = str(df.iloc[i][0])
+		comp_name = str(df.iloc[i][1])
+		bvps = str(df.iloc[i][2])
+		bvps = re.sub("[^-0-9^.]", "", bvps) # 數字做格式控制
+
+		print(comp_id + "  " + comp_name + "   " + bvps + "\n")
+		# 最後維護日期時間
+		str_date = str(datetime.datetime.now())
+		date_last_maint = parser.parse(str_date).strftime("%Y%m%d")
+		time_last_maint = parser.parse(str_date).strftime("%H%M%S")
+		prog_last_maint = "MOPS_YQ_2"
+
+		sqlstr = "select count(*) from MOPS_YQ "
+		sqlstr = sqlstr + "where "
+		sqlstr = sqlstr + "COMP_ID='" + comp_id + "' and "
+		sqlstr = sqlstr + "YYYY='" + yyyy + "' and "
+		sqlstr = sqlstr + "QQ='" + qq + "' "
+
+		#print(sqlstr)
+		cursor = conn.execute(sqlstr)
+		result = cursor.fetchone()
+
+		if result[0] == 0:
+			sqlstr = "insert into MOPS_YQ values ("
+			sqlstr = sqlstr + "'" + comp_id + "',"
+			sqlstr = sqlstr + "'" + comp_name + "',"
+			sqlstr = sqlstr + "'" + yyyy + "',"
+			sqlstr = sqlstr + "'" + qq + "',"
+			sqlstr = sqlstr + "0,"
+			sqlstr = sqlstr + " " + bvps + ","
+			sqlstr = sqlstr + "'" + date_last_maint + "',"
+			sqlstr = sqlstr + "'" + time_last_maint + "',"
+			sqlstr = sqlstr + "'" + prog_last_maint + "' "
+			sqlstr 	= sqlstr + ") "
+
+		else:
+			sqlstr = "update MOPS_YQ set "
+			sqlstr = sqlstr + "bvps=" + bvps + ","
+			sqlstr = sqlstr + "date_last_maint='" + date_last_maint + "',"
+			sqlstr = sqlstr + "time_last_maint='" + time_last_maint + "',"
+			sqlstr = sqlstr + "prog_last_maint='" + prog_last_maint + "' "
+			sqlstr = sqlstr + "where "
+			sqlstr = sqlstr + "COMP_ID='" + comp_id + "' and "
+			sqlstr = sqlstr + "YYYY='" + yyyy + "' and "
+			sqlstr = sqlstr + "QQ='" + qq + "' "
+
+		try:
+			cursor = conn.execute(sqlstr)
+		except sqlite3.Error as er:
+			err_flag = True
+			file.write(sqlstr + "\n")
+			file.write("DB Err:\n" + er.args[0] + "\n")
+			print (sqlstr + "\n")
+			print ("DB Err:\n" + er.args[0] + "\n")		
+
+		# 關閉DB cursor
+		cursor.close()
+
+	#過程中有任何錯誤，進行rollback
+	if err_flag == False:
+		conn.commit()
+	else:
+		conn.execute("rollback")
 
 
 # 結轉網頁資料
-def MOPS_YQ_2(arg_yyy, arg_qq):
-	#sys.exit("For testing abort ......")
-
-	# 建立資料庫連線
-	conn = sqlite3.connect('market_price.sqlite')
-
+def MOPS_YQ_2(arg_yyy, arg_qq, arg_typek):
 	# 建立網頁讀取
 	driver = webdriver.Chrome()
 	driver.get("http://mops.twse.com.tw/mops/web/t163sb05")
@@ -137,6 +207,12 @@ def MOPS_YQ_2(arg_yyy, arg_qq):
 	yyyy = str(int(sear_yyy) + 1911)
 
 	#網頁查詢條件輸入，並提交表單
+	elem = driver.find_element_by_name("TYPEK")
+	if arg_typek == "otc":
+		elem.find_element_by_xpath("//select[@name='TYPEK']/option[text()='上櫃']").click()
+	else:
+		elem.find_element_by_xpath("//select[@name='TYPEK']/option[text()='上市']").click()
+
 	elem = driver.find_element_by_name("year")
 	elem.send_keys(sear_yyy)
 
@@ -146,24 +222,25 @@ def MOPS_YQ_2(arg_yyy, arg_qq):
 
 	cnt = 0
 	delay = 10 # seconds
-
 	while True:
 		try:
-		    element_present = EC.presence_of_element_located((By.NAME, 'fm2'))
-		    WebDriverWait(driver, delay).until(element_present)
-		    print ("Page is ready!")
-		    break
+			element_present = EC.presence_of_element_located((By.NAME, 'fm2'))
+			WebDriverWait(driver, delay).until(element_present)
+			print ("Page is ready!")
+			break
+
 		except TimeoutException:
-		    cnt += 1
-		    print ("Load cnt=" + str(cnt))
-		    if cnt >= 3:
-		    	# 關閉瀏覽器視窗
-		    	driver.quit();
+			cnt += 1
+			print ("Load cnt=" + str(cnt))
+			if cnt >= 3:
+				# 關閉瀏覽器視窗
+				driver.quit();
 
-		    	# 讀取時間太久，直接結束程式
-		    	file.write("@@@ 網頁讀取逾時或該網頁無資料. @@@\n")
-		    	sys.exit("@@@ 網頁讀取逾時或該網頁無資料. @@@")
+				# 讀取時間太久，直接結束程式
+				file.write("Err: 網頁讀取異常或該網頁無資料.\n")
+				file.close()
 
+				sys.exit("Err: 網頁讀取逾時或該網頁無資料.")
 
 	#計算有多少個符合條件特徵的表格個數
 	tables = driver.find_elements_by_xpath("//table[@class='hasBorder']")
@@ -173,9 +250,9 @@ def MOPS_YQ_2(arg_yyy, arg_qq):
 	#網頁中符合條件的table資料都掃過一遍
 	i = 1
 	#tb_cnt = 1
+	data = []
 	while i <= tb_cnt:
-		print("i=" + str(i))
-
+		#print("i=" + str(i))
 		#組合搜尋條件參數
 		arg_str = "//table[@class='hasBorder'][" + str(i) + "]/tbody"
 
@@ -197,70 +274,20 @@ def MOPS_YQ_2(arg_yyy, arg_qq):
 				bvps = a_list[last_elem_idx-1] # 每股參考淨值
 				bvps = re.sub("[^-0-9^.]", "", bvps) # 數字做格式控制
 
-				print(comp_id + "," + comp_name + "," + bvps)
+				#print(comp_id + "," + comp_name + "," + bvps)
+				data.append([comp_id, comp_name, bvps])
 
-				# 最後維護日期時間
-				str_date = str(datetime.datetime.now())
-				date_last_maint = parser.parse(str_date).strftime("%Y%m%d")
-				time_last_maint = parser.parse(str_date).strftime("%H%M%S")
-				prog_last_maint = "MOPS_YQ_2"
-
-				sqlstr = "select count(*) from MOPS_YQ "
-				sqlstr = sqlstr + "where "
-				sqlstr = sqlstr + "COMP_ID='" + comp_id + "' and "
-				sqlstr = sqlstr + "YYYY='" + yyyy + "' and "
-				sqlstr = sqlstr + "QQ='" + qq + "' "
-
-				#print(sqlstr)
-				cursor = conn.execute(sqlstr)
-				result = cursor.fetchone()
-
-				if result[0] == 0:
-					sqlstr = "insert into MOPS_YQ values ("
-					sqlstr = sqlstr + "'" + comp_id + "',"
-					sqlstr = sqlstr + "'" + comp_name + "',"
-					sqlstr = sqlstr + "'" + yyyy + "',"
-					sqlstr = sqlstr + "'" + qq + "',"
-					sqlstr = sqlstr + "0,"
-					sqlstr = sqlstr + " " + bvps + ","
-					sqlstr = sqlstr + "'" + date_last_maint + "',"
-					sqlstr = sqlstr + "'" + time_last_maint + "',"
-					sqlstr = sqlstr + "'" + prog_last_maint + "' "
-					sqlstr 	= sqlstr + ") "
-
-				else:
-					sqlstr = "update MOPS_YQ set "
-					sqlstr = sqlstr + "bvps=" + bvps + ","
-					sqlstr = sqlstr + "date_last_maint='" + date_last_maint + "',"
-					sqlstr = sqlstr + "time_last_maint='" + time_last_maint + "',"
-					sqlstr = sqlstr + "prog_last_maint='" + prog_last_maint + "' "
-					sqlstr = sqlstr + "where "
-					sqlstr = sqlstr + "COMP_ID='" + comp_id + "' and "
-					sqlstr = sqlstr + "YYYY='" + yyyy + "' and "
-					sqlstr = sqlstr + "QQ='" + qq + "' "
-
-				try:
-					cursor = conn.execute(sqlstr)
-					conn.commit()
-				except sqlite3.Error as er:
-					file.write("\n@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@\n")
-					file.write("\n資料 " + comp_id + "," + comp_name + "," + yyyy + qq + "," + bvps + "\n")
-					file.write("資料庫錯誤:\n" + er.args[0] + "\n")
-					file.write("\n@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@\n")
-					print ("\n@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@\n")
-					print ("\n資料 " + comp_id + "," + comp_name + "," + yyyy + qq + "," + bvps + "\n")
-					print ("資料庫錯誤:\n" + er.args[0] + "\n")
-					print ("\n@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@\n")
-
-				# 關閉DB cursor
-				cursor.close()
 		i += 1
-
-	# 資料庫連線關閉
-	conn.close()
 
 	# 關閉瀏覽器視窗
 	driver.quit();
+
+	#print(data)
+	df = pd.DataFrame(data=data, columns=['股票號碼','股票名稱','每股參考淨值'])
+	#print(df)
+
+	# 資料庫存取
+	proc_db(df, yyyy, qq)
 
 	file.write("擷取資料完畢 ...\n")
 	print ("擷取資料完畢 ...")
@@ -269,6 +296,8 @@ def MOPS_YQ_2(arg_yyy, arg_qq):
 # Main                                                                     #
 ############################################################################
 print("Executing MOPS_YQ_2...")
+global err_flag
+err_flag = False
 
 try:
 	run_mode = sys.argv[1]
@@ -294,6 +323,9 @@ str_date = parser.parse(str_date).strftime("%Y%m%d")
 name = "MOPS_YQ_2_LOG_" + str_date + ".txt"
 file = open(name, 'a', encoding = 'UTF-8')
 
+# 建立資料庫連線
+conn = sqlite3.connect('market_price.sqlite')
+
 tStart = time.time()#計時開始
 file.write("\n\n\n*** LOG datetime  " + str(datetime.datetime.now()) + " ***\n")
 
@@ -314,7 +346,14 @@ tEnd = time.time()#計時結束
 file.write ("\n\n\n結轉耗時 %f sec\n" % (tEnd - tStart)) #會自動做進位
 file.write("*** End LOG ***\n")
 
+# 資料庫連線關閉
+conn.close()
+
 # Close File
 file.close()
+
+#若執行過程無錯誤，執行結束後刪除log檔案
+#if err_flag == False:
+#	os.remove(name)
 
 print ("End of prog...")

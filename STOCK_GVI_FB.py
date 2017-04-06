@@ -22,7 +22,7 @@ print("Executing STOCK_GVI_FB...")
 #建立sqlite資料庫連線
 conn = sqlite3.connect("market_price.sqlite")
 
-sqlstr  = "select COMP_ID, COMP_NAME, EPS, BVPS, PRICE, PBR, SROE, ESTM_Y_ROE,"
+sqlstr  = "select COMP_ID, COMP_NAME, STOCK_TYPE, EPS, BVPS, PRICE, PBR, SROE, ESTM_Y_ROE,"
 sqlstr += "GVI,REC_DATE,RANK,PREV_RANK,STATUS,RATE_1,RATE_2,RATE_3,RATE_4 "
 sqlstr += "from STOCK_GVI "
 sqlstr += "where "

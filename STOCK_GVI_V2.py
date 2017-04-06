@@ -32,13 +32,14 @@ def store_db(arg_df, arg_date):
 	for i in range(0,len(arg_df)):
 		comp_id = str(arg_df.iloc[i][0])
 		comp_name = str(arg_df.iloc[i][1])
-		price = arg_df.iloc[i][2]
-		eps = arg_df.iloc[i][3]
-		bvps = arg_df.iloc[i][4]
-		pbr = arg_df.iloc[i][5]
-		sroe = arg_df.iloc[i][6]
-		estm_y_roe = arg_df.iloc[i][7]
-		gvi = arg_df.iloc[i][8]
+		stock_type = str(arg_df.iloc[i][2])
+		price = arg_df.iloc[i][3]
+		eps = arg_df.iloc[i][4]
+		bvps = arg_df.iloc[i][5]
+		pbr = arg_df.iloc[i][6]
+		sroe = arg_df.iloc[i][7]
+		estm_y_roe = arg_df.iloc[i][8]
+		gvi = arg_df.iloc[i][9]
 		rank = cnt
 		rec_date = arg_date
 		
@@ -192,12 +193,13 @@ def store_db(arg_df, arg_date):
 		cursor.close()
 		
 		if is_existed == "N":
-			sqlstr  = "insert into STOCK_GVI (COMP_ID, COMP_NAME, EPS, BVPS, PRICE, "
+			sqlstr  = "insert into STOCK_GVI (COMP_ID, COMP_NAME, STOCK_TYPE, EPS, BVPS, PRICE, "
 			sqlstr += "PBR, SROE, ESTM_Y_ROE, GVI, REC_DATE, RANK, PREV_RANK, "
 			sqlstr += "STATUS,DATE_LAST_MAINT,TIME_LAST_MAINT,PROG_LAST_MAINT"
 			sqlstr += ") values ("
 			sqlstr += "'" + comp_id + "', "
 			sqlstr += "'" + comp_name + "',"
+			sqlstr += "'" + stock_type + "',"
 			sqlstr += str(eps) + ","
 			sqlstr += str(bvps) + ","
 			sqlstr += str(price) + ","
@@ -264,7 +266,7 @@ print(str_date)
 #建立資料庫連線
 conn = sqlite3.connect("market_price.sqlite")
 
-sqlstr  = "SELECT a.SEAR_COMP_ID, b.COMP_ID, a.CLOSE, b.COMP_NAME "
+sqlstr  = "SELECT a.SEAR_COMP_ID, b.COMP_ID, a.CLOSE, b.COMP_NAME, b.STOCK_TYPE "
 sqlstr += "from STOCK_QUO a, STOCK_COMP_LIST b "
 sqlstr += "where "
 sqlstr += "a.QUO_DATE = '" + str_date + "' AND "
@@ -284,6 +286,7 @@ if re_len > 0:
 		comp_id = row[1]
 		price = row[2]
 		comp_name = row[3]
+		stock_type = row[4]
 		
 		#讀取EPS(資料來源是年累計值，因此要扣掉前一期，取得單季EPS)
 		sqlstr  = "select EPS from MOPS_YQ "
@@ -357,11 +360,11 @@ if re_len > 0:
 		gvi = bop * (1 + estm_y_roe)**5
 		
 		#計算完的結果，塞到list
-		data = [comp_id, comp_name, price, eps, bvps, pb, sroe, estm_y_roe, gvi]
+		data = [comp_id, comp_name, stock_type, price, eps, bvps, pb, sroe, estm_y_roe, gvi]
 		ls_gvi.append(data)
 		#print(sear_comp_id + " " + comp_id + " " + str(price) + " " + comp_name + " " + str(eps) + " " + str(bvps) + " " + str(gvi) + "\n")
 		
-	df = pd.DataFrame(ls_gvi, columns = ['股票編號','股票名稱', '股價', 'EPS','BVPS','股價淨值比','季ROE','估計年ROE','GVI'])
+	df = pd.DataFrame(ls_gvi, columns = ['股票編號', '股票名稱', '上市櫃別', '股價', 'EPS','BVPS','股價淨值比','季ROE','估計年ROE','GVI'])
 	df = df.sort_values(by=['GVI'], ascending=[False])[1:101]
 	#print(df)
 	

@@ -18,7 +18,7 @@ print(str_date)
 
 conn = sqlite3.connect("market_price.sqlite")
 
-sqlstr  = "SELECT a.SEAR_COMP_ID, b.COMP_ID, a.CLOSE, b.COMP_NAME "
+sqlstr  = "SELECT a.SEAR_COMP_ID, b.COMP_ID, a.CLOSE, b.COMP_NAME, b.STOCK_TYPE "
 sqlstr += "from STOCK_QUO a, STOCK_COMP_LIST b "
 sqlstr += "where "
 sqlstr += "a.QUO_DATE = '" + str_date + "' AND "
@@ -38,7 +38,8 @@ if re_len > 0:
 		comp_id = row[1]
 		price = row[2]
 		comp_name = row[3]
-		
+		stock_type = row[4]
+
 		#讀取EPS(資料來源是年累計值，因此要扣掉前一期，取得單季EPS)
 		sqlstr  = "select EPS from MOPS_YQ "
 		sqlstr += "where COMP_ID = '" + comp_id + "' "
@@ -111,11 +112,11 @@ if re_len > 0:
 		gvi = bop * (1 + estm_y_roe)**5
 		
 		#計算完的結果，塞到list
-		data = [comp_id, comp_name, price, eps, bvps, pb, sroe, estm_y_roe, gvi]
+		data = [comp_id, comp_name, stock_type, price, eps, bvps, pb, sroe, estm_y_roe, gvi]
 		ls_gvi.append(data)
 		#print(sear_comp_id + " " + comp_id + " " + str(price) + " " + comp_name + " " + str(eps) + " " + str(bvps) + " " + str(gvi) + "\n")
 		
-	df = pd.DataFrame(ls_gvi, columns = ['股票編號','股票名稱', '股價', 'EPS','BVPS','股價淨值比','季ROE','估計年ROE','GVI'])
+	df = pd.DataFrame(ls_gvi, columns = ['股票編號','股票名稱','上市櫃別', '股價', 'EPS','BVPS','股價淨值比','季ROE','估計年ROE','GVI'])
 	df = df.sort_values(by=['GVI'], ascending=[False])[1:101]
 	#print(df.values)
 	
