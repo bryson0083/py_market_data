@@ -353,7 +353,7 @@ conn.close()
 file.close()
 
 #若執行過程無錯誤，執行結束後刪除log檔案
-#if err_flag == False:
-#	os.remove(name)
+if err_flag == False:
+	os.remove(name)
 
 print ("End of prog...")
