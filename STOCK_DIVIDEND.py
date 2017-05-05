@@ -9,7 +9,7 @@ mode_c: 自動抓取當年度除權息資料，在固定日期區間，每天轉
 mode_h: 手動輸入年度，抓取該年度上市櫃公司除權息資料。
 mode_a: 抓取年度區間內，所有台股上市櫃公司除權息資料，須注意本模式結轉資料量大。
 
-資料來源: 
+資料來源:
 公開觀測資訊站 => 彙總報表 => 股東會及股利 => 除權息公告
 http://mops.twse.com.tw/mops/web/t108sb27
 最早的資料從民國94年(2005年)起提供
@@ -26,6 +26,7 @@ import requests
 from bs4 import BeautifulSoup
 from dateutil import parser
 from random import randint
+import codecs
 
 # 自動結轉資料
 def mode_c():
@@ -127,8 +128,8 @@ def mode_a(): #最早的資料年度為2005(民國94年起)
 		print("結轉上櫃公司除權息資料...")
 		GET_STOCK_DIVIDEND(yyy, 'otc')
 
-		# 隨機等待60~120秒的時間
-		random_sec = randint(60,120)
+		# 隨機等待180~300秒的時間
+		random_sec = randint(180,300)
 		print("隨機等待秒數=" + str(random_sec) + "...")
 		time.sleep(random_sec)
 
@@ -165,6 +166,16 @@ def GET_STOCK_DIVIDEND(arg_yyy, arg_typek):
 	sp = BeautifulSoup(r.text, 'html.parser')
 	#print(sp)
 
+	"""
+	#for test 讀取存檔案的網頁，避免過度讀取網站
+	f=codecs.open("C:/Users/bryson0083/Desktop/DIVI2015.html", 'r', encoding = 'utf-8')
+	#print(f.read())
+
+	data = f.read()
+	#data.encoding = "utf-8"
+	sp = BeautifulSoup(data, 'html.parser')
+	"""
+
 	table = sp.findAll('table', attrs={'class':'hasBorder'})
 	tb_cnt = len(table) # 網頁上的表格總數
 	#print(tb_cnt)
@@ -199,25 +210,29 @@ def GET_STOCK_DIVIDEND(arg_yyy, arg_typek):
 		df = pd.DataFrame(data=rdata, columns = head)
 		all_df = pd.concat([all_df,df],ignore_index=True)
 
-		i += 1		
+		i += 1
 
 	all_df = all_df.loc[:,['公司代號', '公司名稱', '股利所屬年度','盈餘轉增資配股(元/股)','除權交易日','盈餘分配之股東現金股利(元/股)','除息交易日']]
 	#print(all_df)
 
 	#資料庫處裡
-	proc_db(all_df)
+	proc_db(arg_yyy, all_df)
 
 
-def proc_db(df):
+def proc_db(arg_yyy, df):
 	#print(df)
 
 	#有錯誤出現時，設定err_flag=True作為識別
 	global err_flag
 
+	#由於公開觀測資訊站，股利所屬年度，會有某些股票不一樣，因此
+	#這部分統一給值，不使用網頁上的表格資料。
+	setm_year = str(int(arg_yyy) + 1911 - 1)
+
 	for i in range(0,len(df)):
 		comp_id = str(df.loc[i]['公司代號'])
 		comp_name = str(df.loc[i]['公司名稱'])
-		yyyy = str(int(df.loc[i]['股利所屬年度']) + 1911)
+		#yyyy = str(int(df.loc[i]['股利所屬年度']) + 1911)
 		cash = df.loc[i]['盈餘分配之股東現金股利(元/股)']	#現金股利
 		xd_date = df.loc[i]['除息交易日']
 		sre = df.loc[i]['盈餘轉增資配股(元/股)']			#股票股利
@@ -241,64 +256,80 @@ def proc_db(df):
 		if len(sre.strip()) == 0:
 			sre = "0"
 
+		if cash == "0":
+			xd_date = " "	#若只有除息日期有值，但現金股利為0，則清空除息日期
+
+		if sre == "0":
+			xr_date = " "	#若只有除權日期有值，但股票股利為0，則清空除權日期
+
 		# 最後維護日期時間
 		str_date = str(datetime.datetime.now())
 		date_last_maint = parser.parse(str_date).strftime("%Y%m%d")
 		time_last_maint = parser.parse(str_date).strftime("%H%M%S")
 		prog_last_maint = "STOCK_DIVIDEND"
 
-		#print(comp_id + " " + comp_name + " " + shd_date + " " + cash + " " + sre)
+		#if comp_id == "2891":
+		#	print(comp_id + " " + comp_name + " " + xd_date + " " + cash + " " + xr_date + " " + sre)
 
-		#資料庫處理
-		sqlstr  = "select count(*) from STOCK_DIVIDEND "
-		sqlstr += "where "
-		sqlstr += "COMP_ID='" + comp_id + "' and "
-		sqlstr += "SETM_YEAR='" + yyyy + "' "
-
-		cursor = conn.execute(sqlstr)
-		result = cursor.fetchone()
-
-		if result[0] == 0:
-			sqlstr  = "insert into STOCK_DIVIDEND "
-			sqlstr += "(COMP_ID,COMP_NAME,SETM_YEAR,"
-			sqlstr += "XD_DATE,CASH,XR_DATE,SRE,"
-			sqlstr += "DATE_LAST_MAINT,TIME_LAST_MAINT,PROG_LAST_MAINT"
-			sqlstr += ") values ("
-			sqlstr += "'" + comp_id + "',"
-			sqlstr += "'" + comp_name + "',"
-			sqlstr += "'" + yyyy + "',"
-			sqlstr += "'" + xd_date + "',"
-			sqlstr += " " + cash + ","
-			sqlstr += "'" + xr_date + "',"
-			sqlstr += " " + sre + ","
-			sqlstr += "'" + date_last_maint + "',"
-			sqlstr += "'" + time_last_maint + "',"
-			sqlstr += "'" + prog_last_maint + "' "
-			sqlstr += ") "
-		else:
-			sqlstr  = "update STOCK_DIVIDEND set "
-			sqlstr += "XD_DATE='" + xd_date + "',"
-			sqlstr += "CASH=" + cash + ","
-			sqlstr += "XR_DATE='" + xr_date + "',"
-			sqlstr += "SRE=" + sre + ","
-			sqlstr += "date_last_maint='" + date_last_maint + "',"
-			sqlstr += "time_last_maint='" + time_last_maint + "',"
-			sqlstr += "prog_last_maint='" + prog_last_maint + "' "
+		#排除有除權息日期，但無配發股票股利、現金股利股票
+		if cash > "0" or sre > "0":
+			#資料庫處理
+			sqlstr  = "select count(*) from STOCK_DIVIDEND "
 			sqlstr += "where "
 			sqlstr += "COMP_ID='" + comp_id + "' and "
-			sqlstr += "SETM_YEAR='" + yyyy + "' "
+			sqlstr += "SETM_YEAR='" + setm_year + "' "
 
-		try:
 			cursor = conn.execute(sqlstr)
-		except sqlite3.Error as er:
-			err_flag = True
-			file.write(sqlstr + "\n")
-			file.write("DB Err:\n" + er.args[0] + "\n")
-			print (sqlstr + "\n")
-			print ("DB Err:\n" + er.args[0] + "\n")		
+			result = cursor.fetchone()
 
-		# 關閉DB cursor
-		cursor.close()
+			if result[0] == 0:
+				sqlstr  = "insert into STOCK_DIVIDEND "
+				sqlstr += "(COMP_ID,COMP_NAME,SETM_YEAR,"
+				sqlstr += "XD_DATE,CASH,XR_DATE,SRE,"
+				sqlstr += "DATE_LAST_MAINT,TIME_LAST_MAINT,PROG_LAST_MAINT"
+				sqlstr += ") values ("
+				sqlstr += "'" + comp_id + "',"
+				sqlstr += "'" + comp_name + "',"
+				sqlstr += "'" + setm_year + "',"
+				sqlstr += "'" + xd_date + "',"
+				sqlstr += " " + cash + ","
+				sqlstr += "'" + xr_date + "',"
+				sqlstr += " " + sre + ","
+				sqlstr += "'" + date_last_maint + "',"
+				sqlstr += "'" + time_last_maint + "',"
+				sqlstr += "'" + prog_last_maint + "' "
+				sqlstr += ") "
+			else:
+				sqlstr  = "update STOCK_DIVIDEND set "
+
+				if cash > "0":
+					sqlstr += "XD_DATE='" + xd_date + "',"
+					sqlstr += "CASH=" + cash + ","
+				if sre > "0":
+					sqlstr += "XR_DATE='" + xr_date + "',"
+					sqlstr += "SRE=" + sre + ","
+
+				sqlstr += "date_last_maint='" + date_last_maint + "',"
+				sqlstr += "time_last_maint='" + time_last_maint + "',"
+				sqlstr += "prog_last_maint='" + prog_last_maint + "' "
+				sqlstr += "where "
+				sqlstr += "COMP_ID='" + comp_id + "' and "
+				sqlstr += "SETM_YEAR='" + setm_year + "' "
+
+			try:
+				#if comp_id == "2891":
+				#	print(sqlstr + "\n")
+
+				cursor = conn.execute(sqlstr)
+			except sqlite3.Error as er:
+				err_flag = True
+				file.write(sqlstr + "\n")
+				file.write("DB Err:\n" + er.args[0] + "\n")
+				print (sqlstr + "\n")
+				print ("DB Err:\n" + er.args[0] + "\n")
+
+			# 關閉DB cursor
+			cursor.close()
 
 	#過程中有任何錯誤，進行rollback
 	if err_flag == False:
