@@ -107,6 +107,7 @@ def Patt_Recon(arg_stock, str_prev_date, str_today, str_ceiling_date):
 					rec_data_yn = True
 					patt_type = "MS"
 
+				"""
 				#Bearish patterns after uptrends
 				#TBC判斷
 				if (od1 > cd1 and od2 > cd2 and od3 > cd3) and \
@@ -133,6 +134,7 @@ def Patt_Recon(arg_stock, str_prev_date, str_today, str_ceiling_date):
 				   (chk_u_yn == "Y"):
 					rec_data_yn = True
 					patt_type = "ES"
+				"""
 
 			if rec_data_yn == True:
 				ls_result.append([arg_stock[0],arg_stock[1], dt, patt_type])
@@ -193,9 +195,11 @@ cursor.close()
 #關閉資料庫連線
 conn.close()
 
-#結果寫入CSV FILE
-#print(df_result)
-df_result.to_csv('STOCK_SELECT_TYPE03_'+ str_today +'.csv', encoding='utf-8')
+#結果寫入EXCEL檔
+file_name = 'STOCK_SELECT_TYPE03_' + str_today + '.xlsx'
+writer = pd.ExcelWriter(file_name, engine='xlsxwriter')
+df_result.to_excel(writer, sheet_name='stock', index=False)
+writer.save()
 
 tEnd = time.time()#計時結束
 file.write ("\n\n\n結轉耗時 %f sec\n" % (tEnd - tStart)) #會自動做進位

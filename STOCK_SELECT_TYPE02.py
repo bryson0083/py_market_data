@@ -238,13 +238,14 @@ if re_len > 0:
 		select_m_yn = JUG_STOCK_QUO(row[0], str_prev_date, str_today, "M")
 		#	print(select_m_yn)
 
+		"""
 		if row[0] == "2029.TW":
 			print("#################")
 			print(select_d_yn)
 			print(select_w_yn)
 			print(select_m_yn)
 			print("#################")
-
+		"""
 
 		if select_d_yn == "Y" and select_w_yn == "Y" and select_m_yn == "Y":
 			i += 1
