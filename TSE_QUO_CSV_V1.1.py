@@ -64,13 +64,14 @@ def TSE_QUO_READ_CSV(arg_date):
 	while True:
 		#for item in quo_list[idx]:
 		#	print(item)
-		
-		# 判斷若list長度不滿17，跳出迴圈
-		if len(quo_list[idx]) != 17:
-			break
-			
+
 		data = [str(item) for item in quo_list[idx]]
-		data = data[0:len(data)-1]
+		data = list(filter(None, data))	#過濾empty string，寫法等同於[str(item) for item in quo_list[idx] if item]，但filter運算較快
+
+		# 判斷若list data長度不滿16，跳出迴圈
+		if len(data) != 16:
+			break
+
 		all_data.append(data)
 		
 		idx += 1
@@ -103,7 +104,6 @@ def TSE_QUO_DB(arg_df, arg_date):
 		q_close = arg_df.iloc[i][5].replace('"','').replace(",","").replace("=","").strip()	# 收盤價
 		q_vol = arg_df.iloc[i][6].replace('"','').replace(",","").replace("=","").strip()	# 成交量
 		q_per = str(arg_df.iloc[i][7]).replace('"','').replace(",","").replace("=","").strip()	# 本益比
-		#print(comp_id + "#" + comp_name + "#" + str(q_open) + "#" + str(q_high) + "#" + str(q_low) + "#" + str(q_close) + "#" + str(q_vol) + "#" + str(q_per) + "#\n")
 		
 		# 最後維護日期時間
 		str_date = str(datetime.datetime.now())
@@ -120,7 +120,9 @@ def TSE_QUO_DB(arg_df, arg_date):
 			q_low = 0
 		if q_close == "--":
 			q_close = 0
-		
+
+		#print(comp_id + "#" + comp_name + "#" + str(q_open) + "#" + str(q_high) + "#" + str(q_low) + "#" + str(q_close) + "#" + str(q_vol) + "#" + str(q_per) + "#\n")
+
 		#原始CSV中，有部分股票，當天有交易，但是沒有任何成交量
 		#因此這些股票的當天交易資料，不寫入資料庫
 		if float(q_close) > 0 and int(q_vol) > 0:
@@ -229,7 +231,7 @@ start_date = str(start_date)[0:10]
 start_date = parser.parse(start_date).strftime("%Y/%m/%d")
 
 #for需要時手動設定日期區間用
-#start_date = "2017/05/25"
+#start_date = "2017/05/18"
 #end_date = "2017/05/25"
 
 # 寫入LOG File

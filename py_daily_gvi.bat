@@ -7,7 +7,10 @@ chcp 65001
 python STOCK_SELECT_TYPE01.py
 python STOCK_SELECT_TYPE02.py
 python STOCK_SELECT_TYPE03.py
-python STOCK_SELECT_TYPE04.py
+python STOCK_SELECT_TYPE04_V1.1.py
+python STOCK_SELECT_TYPE05.py
+python STOCK_SELECT_TYPE06.py
+python STOCK_SELECT_TYPE07.py
 call deactivate
 
 pause
