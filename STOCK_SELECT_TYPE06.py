@@ -73,8 +73,15 @@ def Patt_Recon(arg_stock, str_prev_date, str_today):
 		ma8 = talib.MA(npy_close, timeperiod=8, matype=0)
 		df['ma8'] = ma8
 
+		#計算50MA
+		ma50 = talib.MA(npy_close, timeperiod=50, matype=0)
+		df['ma50'] = ma50
+
 		#最近一天交易日8MA值
 		last_8ma = df['ma8'].tail(1)
+
+		#最近一天交易日50MA值
+		last_50ma = df['ma50'].tail(1)
 
 		#三條MA線近六天的數值，全部丟到一個list下，一起計算變異數
 		ls_ma = []
@@ -84,8 +91,13 @@ def Patt_Recon(arg_stock, str_prev_date, str_today):
 		var_val = statistics.variance(ls_ma)
 
 		#三條均線變異數介於0~1間、最近一天成交量相對平均量成長20%、當天上漲3%以下、
-		#最近一天收盤價在8MA之上、成交量均量需大於500張
-		if (var_val > 0 and var_val < 1) and rt >= 20 and (rise_rt > 0 and rise_rt < 3) and (last_close.iloc[0] > last_8ma.iloc[0]) and avg_vol > 500:
+		#最近一天收盤價在8MA跟50MA之上、成交量均量需大於500張
+		if (var_val > 0 and var_val < 1) and \
+		   rt >= 20 and \
+		   (rise_rt > 0 and rise_rt < 3) and \
+		   (last_close.iloc[0] > last_8ma.iloc[0]) and \
+		   (last_close.iloc[0] > last_50ma.iloc[0]) and \
+		   avg_vol > 500:
 			ls_result = [[arg_stock[0],arg_stock[1],var_val,rt]]
 			df_result = pd.DataFrame(ls_result, columns=['stock_id', 'stock_name', 'var', 'burst_rt'])
 
