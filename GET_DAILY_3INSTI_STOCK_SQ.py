@@ -93,8 +93,8 @@ start_date = parser.parse(str(start_date)).strftime("%Y%m%d")
 end_date = parser.parse(str(dt)).strftime("%Y%m%d")
 
 #for需要時手動設定日期區間用(資料最早日期20120502起)
-#start_date = "20170101"
-#end_date = "20170608"
+#start_date = "20120502"
+#end_date = "20161231"
 
 #LOG檔
 str_date = str(datetime.datetime.now())
@@ -146,10 +146,10 @@ while i <= (int_diff_date+1):
 	i += 1
 	
 	# 累計抓滿有收盤資料90天就強制跳出迴圈
-	#if cnt == 90:
-	#	print("抓滿90天，強制結束.")
-	#	file.write("抓滿90天，強制結束.\n")
-	#	break
+	if cnt == 90:
+		print("抓滿90天，強制結束.")
+		file.write("抓滿90天，強制結束.\n")
+		break
 
 tEnd = time.time()#計時結束
 file.write ("\n\n\n結轉耗時 %f sec\n" % (tEnd - tStart)) #會自動做進位
