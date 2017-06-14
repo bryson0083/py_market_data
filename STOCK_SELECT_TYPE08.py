@@ -32,7 +32,8 @@ strsql += "where RANK in ('A', 'B') "
 strsql += "order by RANK, FR_BAS_CNT, IT_BAS_CNT, DE_BAS_CNT "
 
 try:
-	df_result = pd.read_sql(strsql, conn, index_col='SEAR_COMP_ID', columns=['股票代號', '名稱', '外資買賣超天數', '投信買賣超天數', '自營商買賣超天數', '外資買賣超張數', '投信買賣超張數', '自營商買賣超張數', '類別', '備註'])
+	#df_result = pd.read_sql(strsql, conn, index_col='SEAR_COMP_ID', columns=['股票代號', '名稱', '外資買賣超天數', '投信買賣超天數', '自營商買賣超天數', '外資買賣超張數', '投信買賣超張數', '自營商買賣超張數', '類別', '備註'])
+	df_result = pd.read_sql(strsql, conn, columns=['股票代號', '名稱', '外資買賣超天數', '投信買賣超天數', '自營商買賣超天數', '外資買賣超張數', '投信買賣超張數', '自營商買賣超張數', '類別', '備註'])
 	print(df_result)
 except Exception as e:
 	file.write("$$$ Err:" + str_date + " 選股報表產生錯誤. $$$\n")
