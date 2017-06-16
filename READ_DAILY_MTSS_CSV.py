@@ -114,7 +114,7 @@ def STORE_DB(arg_df, arg_date):
 
 		mp_yes_bls = int(arg_df.loc[i]['融資前日餘額'].replace(",","").strip())
 		mp_tod_bls = int(arg_df.loc[i]['融資今日餘額'].replace(",","").strip())
-		mp_net_bls = mp_tod_bls - mp_tod_bls	#資增
+		mp_net_bls = mp_tod_bls - mp_yes_bls	#資增
 		mp_qta = int(arg_df.loc[i]['融資限額'].replace(",","").strip())
 		#計算融資使用率%
 		if mp_qta > 0:
@@ -125,7 +125,7 @@ def STORE_DB(arg_df, arg_date):
 
 		ss_yes_bls = int(arg_df.loc[i]['融券前日餘額'].replace(",","").strip())
 		ss_tod_bls = int(arg_df.loc[i]['融券今日餘額'].replace(",","").strip())
-		ss_net_bls = ss_tod_bls - ss_tod_bls	#券增
+		ss_net_bls = ss_tod_bls - ss_yes_bls	#券增
 		ss_qta = int(arg_df.loc[i]['融券限額'].replace(",","").strip())
 		#計算融券使用率%
 		if ss_qta > 0:
@@ -239,8 +239,8 @@ start_date = parser.parse(str(start_date)).strftime("%Y%m%d")
 end_date = parser.parse(str(dt)).strftime("%Y%m%d")
 
 #for需要時手動設定日期區間用
-start_date = "20170613"
-end_date = "20170613"
+#start_date = "20170101"
+#end_date = "20170614"
 
 # 寫入LOG File
 str_date = str(datetime.datetime.now())

@@ -1,15 +1,15 @@
 # -*- coding: utf-8 -*-
 """
-櫃買中心三大法人個股買賣超日報~每日收盤CSV檔下載
+證交所外資及陸資投資持股統計~每日收盤CSV檔下載
 
 @author: Bryson Xue
 @target_rul: 
-	查詢網頁 => http://www.tpex.org.tw/web/stock/3insti/daily_trade/3itrade_hedge.php?l=zh-tw
-	CSV連結  => http://www.tpex.org.tw/web/stock/3insti/daily_trade/3itrade_hedge_download.php?l=zh-tw&se=EW&t=D&d=106/06/07&s=0,asc
+	查詢網頁 => http://www.tse.com.tw/zh/page/trading/fund/MI_QFIIS.html
+	CSV連結  => http://www.tse.com.tw/fund/MI_QFIIS?response=csv&date=20170615&selectType=ALLBUT0999
 @Note: 
-	櫃買中心三大法人個股買賣超日報
+	證交所外資及陸資投資持股統計
 	下載網頁CSV檔
-	限定抓取資料，所有證券(不含權證、牛熊證)
+	限定抓取資料，全部(不含權證)
 """
 import requests
 import time
@@ -21,21 +21,17 @@ import os.path
 
 def DO_WAIT():
 	#隨機等待一段時間
-	#sleep_sec = randint(30,120)
-	sleep_sec = randint(5,10)
+	sleep_sec = randint(30,120)
+	#sleep_sec = randint(5,10)
 	print("間隔等待 " + str(sleep_sec) + " secs.\n")
 	time.sleep(sleep_sec)
 
 def GET_CSV(sear_date):
 	global err_flag
 	rt_flag = False
-	file_name = "./daily_3insti_stock_data_sq/" + sear_date + ".csv"
+	file_name = "./daily_fr_holding_shares/" + sear_date + ".csv"
 	is_existed = os.path.exists(file_name)
-
-	# 網頁查詢日期參數，轉民國年日期
-	arg_date = parser.parse(str(sear_date)).strftime("%Y/%m/%d")
-	arg_date = str(int(arg_date[0:4]) - 1911) + arg_date[4:]
-	str_url = "http://www.tpex.org.tw/web/stock/3insti/daily_trade/3itrade_hedge_download.php?l=zh-tw&se=EW&t=D&d=" + arg_date + "&s=0,asc"
+	str_url = "http://www.tse.com.tw/fund/MI_QFIIS?response=csv&date=" + sear_date + "&selectType=ALLBUT0999"
 
 	# 檢查若已有檔案，則不再下載
 	if is_existed == False:
@@ -51,7 +47,7 @@ def GET_CSV(sear_date):
 			len_r = len(r.text)
 			#print(len_r)
 
-			if len_r == 221:	# 表示當天無收盤資料
+			if len_r <= 812:	# 表示當天無收盤資料
 				# 若當天無資料，還是產生一個檔案
 				file2 = open(file_name, "a", encoding="big5")
 				file2.write("當天無交易資料")
@@ -69,7 +65,7 @@ def GET_CSV(sear_date):
 				DO_WAIT()	# 避免過度讀取網站，隨機間隔時間再讀取網頁
 
 		except Exception as e:
-			file.write("$$$ Err:" + sear_date + " 三大法人個股買賣超資料抓取異常，請檢查是否網路有問題或原網頁已更改. $$$")
+			file.write("$$$ Err:" + sear_date + " 證交所外資及陸資投資持股統計資料抓取異常，請檢查是否網路有問題或原網頁已更改. $$$")
 			err_flag = True
 			rt_flag = False
 
@@ -82,7 +78,7 @@ def GET_CSV(sear_date):
 ############################################################################
 # Main                                                                     #
 ############################################################################
-print("Executing GET_DAILY_3INSTI_STOCK_SQ ...\n\n")
+print("Executing GET_DAILY_FR_HOLDING_SHARES ...\n\n")
 global err_flag
 err_flag = False
 
@@ -92,20 +88,20 @@ start_date = dt + datetime.timedelta(days=-7)
 start_date = parser.parse(str(start_date)).strftime("%Y%m%d")
 end_date = parser.parse(str(dt)).strftime("%Y%m%d")
 
-#for需要時手動設定日期區間用(資料最早日期20141201起)
-#start_date = "20141201"
-#end_date = "20161231"
+#for需要時手動設定日期區間用(資料最早日期20040211起)
+start_date = "20170101"
+end_date = "20170615"
 
 #LOG檔
 str_date = str(datetime.datetime.now())
 str_date = parser.parse(str_date).strftime("%Y%m%d")
-name = "GET_DAILY_3INSTI_STOCK_SQ_LOG_" + str_date + ".txt"
+name = "GET_DAILY_FR_HOLDING_SHARES_LOG_" + str_date + ".txt"
 file = open(name, "a", encoding="UTF-8")
 
 print_dt = str(str_date) + (' ' * 22)
 print("##############################################")
-print("##      櫃買中心三大法人個股買賣超日報      ##")
-print("##        所有證券(不含權證、牛熊證)        ##")                                    ##")
+print("##       證交所外資及陸資投資持股統計       ##")
+print("##               全部(不含權證)             ##")
 print("##                                          ##")
 print("##  datetime: " + print_dt +               "##")
 print("##############################################")
@@ -134,26 +130,26 @@ while i <= (int_diff_date+1):
 		str_date = parser.parse(str(dt)).strftime("%Y%m%d")
 
 	#print(str_date + "\n")
-	print("下載 " + str_date + " 三大法人個股買賣超資料.\n")
+	print("下載 " + str_date + " 證交所外資及陸資投資持股統計資料.\n")
 	rt = GET_CSV(str_date)
 	
 	if rt == True:
 		cnt += 1
-		print(str_date + "下載成功.\n")
+		print(str_date + " 抓取程序正常結束.\n")
 	
 	dt = datetime.datetime.strptime(str_date, date_fmt).date()
 	dt = dt + relativedelta(days=1)	
 	i += 1
 	
 	# 累計抓滿有收盤資料90天就強制跳出迴圈
-	if cnt == 90:
-		print("抓滿90天，強制結束.")
-		file.write("抓滿90天，強制結束.\n")
-		break
+	#if cnt == 90:
+	#	print("抓滿90天，強制結束.")
+	#	file.write("抓滿90天，強制結束.\n")
+	#	break
 
 tEnd = time.time()#計時結束
 file.write ("\n\n\n結轉耗時 %f sec\n" % (tEnd - tStart)) #會自動做進位
-file.write("*** End LOG ***\n")
+file.write ("*** End LOG ***\n")
 
 # Close File
 file.close()

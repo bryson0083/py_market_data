@@ -92,10 +92,10 @@ def READ_CSV(arg_date):
 	df = pd.DataFrame(all_data[1:], columns = ls_title)
 	#df.columns = ['代號', '股票名稱', '融資買進', '融資賣出', '融資現金償還', '融資前日餘額', '融資今日餘額', '融資限額', '融券買進', '融券賣出', '融券現金償還', '融券前日餘額', '融券今日餘額', '融券限額', '資券互抵', '註記']
 	df2 = df.loc[:,['代號', '名稱', '前資餘額(張)', '資餘額', '資限額', '資使用率(%)', '前券餘額(張)', '券餘額', '券限額', '券使用率(%)']]
-	print(df2)
+	#print(df2)
 
 	#寫入、更新資料庫
-	#STORE_DB(df2, arg_date)
+	STORE_DB(df2, arg_date)
 
 def STORE_DB(arg_df, arg_date):
 	global err_flag
@@ -111,29 +111,19 @@ def STORE_DB(arg_df, arg_date):
 		#print(str(df.index[i]))
 		comp_id = str(arg_df.loc[i]['代號'])
 		comp_id = comp_id.replace('"','').replace("=","").strip() + ".TW"
-		comp_name = str(arg_df.loc[i]['股票名稱']).strip()
+		comp_name = str(arg_df.loc[i]['名稱']).strip()
 
-		mp_yes_bls = int(arg_df.loc[i]['融資前日餘額'].replace(",","").strip())
-		mp_tod_bls = int(arg_df.loc[i]['融資今日餘額'].replace(",","").strip())
-		mp_net_bls = mp_tod_bls - mp_tod_bls	#資增
-		mp_qta = int(arg_df.loc[i]['融資限額'].replace(",","").strip())
-		#計算融資使用率%
-		if mp_qta > 0:
-			mp_usage_rt = mp_tod_bls / mp_qta * 100
-			mp_usage_rt = round(mp_usage_rt, 2)
-		else:
-			mp_usage_rt = 0
+		mp_yes_bls = int(arg_df.loc[i]['前資餘額(張)'].replace(",","").strip())
+		mp_tod_bls = int(arg_df.loc[i]['資餘額'].replace(",","").strip())
+		mp_net_bls = mp_tod_bls - mp_yes_bls	#資增
+		mp_qta = int(arg_df.loc[i]['資限額'].replace(",","").strip())
+		mp_usage_rt = round(float(arg_df.loc[i]['資使用率(%)'].replace(",","").strip()), 2)
 
-		ss_yes_bls = int(arg_df.loc[i]['融券前日餘額'].replace(",","").strip())
-		ss_tod_bls = int(arg_df.loc[i]['融券今日餘額'].replace(",","").strip())
-		ss_net_bls = ss_tod_bls - ss_tod_bls	#券增
-		ss_qta = int(arg_df.loc[i]['融券限額'].replace(",","").strip())
-		#計算融券使用率%
-		if ss_qta > 0:
-			ss_usage_rt = ss_tod_bls / ss_qta * 100
-			ss_usage_rt = round(ss_usage_rt, 2)
-		else:
-			ss_usage_rt = 0
+		ss_yes_bls = int(arg_df.loc[i]['前券餘額(張)'].replace(",","").strip())
+		ss_tod_bls = int(arg_df.loc[i]['券餘額'].replace(",","").strip())
+		ss_net_bls = ss_tod_bls - ss_yes_bls	#券增
+		ss_qta = int(arg_df.loc[i]['券限額'].replace(",","").strip())
+		ss_usage_rt = round(float(arg_df.loc[i]['券使用率(%)'].replace(",","").strip()), 2)
 
 		# 最後維護日期時間
 		str_date = str(datetime.datetime.now())
@@ -141,8 +131,8 @@ def STORE_DB(arg_df, arg_date):
 		time_last_maint = parser.parse(str_date).strftime("%H%M%S")
 		prog_last_maint = "READ_DAILY_MTSS_CSV_SQ"
 
-		#if comp_id == "0050.TW":
-		#	print(comp_id + "#" + comp_name + "#" + str(ss_tod_bls) + "#" + str(ss_net_bls) + "#" + str(ss_qta) + "#" + str(ss_usage_rt) + "#\n")
+		#if comp_id == "1586.TW":
+		#	print(comp_id + "#" + comp_name + "#" + str(mp_tod_bls) + "#" + str(mp_net_bls) + "#" + str(mp_qta) + "#" + str(mp_usage_rt) + "#\n")
 
 		#檢查資料是否已存在
 		strsql  = "select count(*) from STOCK_CHIP_ANA "
@@ -240,8 +230,8 @@ start_date = parser.parse(str(start_date)).strftime("%Y%m%d")
 end_date = parser.parse(str(dt)).strftime("%Y%m%d")
 
 #for需要時手動設定日期區間用
-start_date = "20170613"
-end_date = "20170613"
+#start_date = "20170101"
+#end_date = "20170614"
 
 # 寫入LOG File
 str_date = str(datetime.datetime.now())
