@@ -21,8 +21,8 @@ import os.path
 
 def DO_WAIT():
 	#隨機等待一段時間
-	sleep_sec = randint(30,120)
-	#sleep_sec = randint(5,10)
+	#sleep_sec = randint(30,120)
+	sleep_sec = randint(5,10)
 	print("間隔等待 " + str(sleep_sec) + " secs.\n")
 	time.sleep(sleep_sec)
 
@@ -89,8 +89,8 @@ start_date = parser.parse(str(start_date)).strftime("%Y%m%d")
 end_date = parser.parse(str(dt)).strftime("%Y%m%d")
 
 #for需要時手動設定日期區間用(資料最早日期20040211起)
-start_date = "20170101"
-end_date = "20170615"
+#start_date = "20170101"
+#end_date = "20170615"
 
 #LOG檔
 str_date = str(datetime.datetime.now())
