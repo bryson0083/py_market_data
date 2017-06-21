@@ -19,6 +19,7 @@ from dateutil import parser
 import datetime
 from dateutil.relativedelta import relativedelta
 import os.path
+import sys
 
 def DO_WAIT():
 	#隨機等待一段時間
@@ -125,16 +126,6 @@ print("Executing GET_DAILY_FR_HOLDING_SHARES_SQ ...\n\n")
 global err_flag
 err_flag = False
 
-#起訖日期(預設跑當天日期到往前推7天)
-dt = datetime.datetime.now()
-start_date = dt + datetime.timedelta(days=-7)
-start_date = parser.parse(str(start_date)).strftime("%Y%m%d")
-end_date = parser.parse(str(dt)).strftime("%Y%m%d")
-
-#for需要時手動設定日期區間用(資料最早日期20040801起)
-#start_date = "20170101"
-#end_date = "20170615"
-
 #LOG檔
 str_date = str(datetime.datetime.now())
 str_date = parser.parse(str_date).strftime("%Y%m%d")
@@ -148,6 +139,40 @@ print("##              分類項目:全部               ##")
 print("##                                          ##")
 print("##  datetime: " + print_dt +               "##")
 print("##############################################")
+
+#依據所選模式，決定起訖日期
+#mode A:跑當天日期到往前推7天
+#mode B:跑昨天日期到往前推7天
+try:
+	run_mode = sys.argv[1]
+	run_mode = run_mode.upper()
+except Exception as e:
+	run_mode = "A"
+
+print("you choose mode " + run_mode)
+
+dt = datetime.datetime.now()
+if run_mode == "A":
+	print("A: 抓取到當天資料...\n")
+	file.write("A: 抓取到當天資料...\n")
+	start_date = dt + datetime.timedelta(days=-7)
+	start_date = parser.parse(str(start_date)).strftime("%Y%m%d")
+	end_date = parser.parse(str(dt)).strftime("%Y%m%d")
+elif run_mode == "B":
+	print("B: 抓取到昨天資料...\n")
+	file.write("B: 抓取到昨天資料...\n")
+	start_date = dt + datetime.timedelta(days=-8)
+	start_date = parser.parse(str(start_date)).strftime("%Y%m%d")
+	end_date = dt + datetime.timedelta(days=-1)
+	end_date = parser.parse(str(end_date)).strftime("%Y%m%d")
+else:
+	print("模式錯誤，結束程式...\n")
+	file.write("模式錯誤，結束程式...\n")
+	sys.exit("模式錯誤，結束程式...\n")
+
+#for需要時手動設定日期區間用(資料最早日期20040801起)
+#start_date = "20170101"
+#end_date = "20170615"
 
 print("結轉日期" + start_date + "~" + end_date)
 
