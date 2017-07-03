@@ -232,7 +232,7 @@ try:
 	run_mode = sys.argv[1]
 	run_mode = run_mode.upper()
 except Exception as e:
-	run_mode = "A"
+	run_mode = "B"
 
 print("you choose mode " + run_mode)
 if run_mode == "A":
@@ -250,8 +250,8 @@ else:
 conn = sqlite3.connect("market_price.sqlite")
 
 #抓取網站日期清單
-dt_list = GET_DATE_LIST()
-#dt_list = ['20170616']	#for test 手動用
+#dt_list = GET_DATE_LIST()
+dt_list = ['20160617', '20160624','20160701','20160707','20160715','20160722','20160729','20160805','20160812','20160819','20160826','20160902','20160910','20160914','20160923','20160930','20161007','20161014','20161021','20161028','20161104','20161111','20161118','20161125','20161202','20161209','20161216','20161223','20161230']	#for test 手動用
 #print(dt_list)
 
 #依據所選模式抓取資料
