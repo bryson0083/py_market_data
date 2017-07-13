@@ -71,10 +71,9 @@ def CHK_DATA_EXIST(arg_sear_comp_id, arg_quo_date):
 
 def GET_DATE_LIST():
 	global err_flag
-	rt_flag = True
 
 	headers = {'User-Agent':'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/58.0.3029.110 Safari/537.36'}
-	session = requests.session()
+	#session = requests.session()
 
 	# 拋送查詢條件到頁面，並取回查詢結果內容
 	try:
@@ -108,7 +107,7 @@ def GET_WEB_DATA(arg_stock, arg_date):
 	print("\n抓取" + sear_comp_id + " " + comp_name + " 日期" + arg_date + "集保戶股權分散資料.")
 
 	headers = {'User-Agent':'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/58.0.3029.110 Safari/537.36'}
-	session = requests.session()
+	#session = requests.session()
 
 	# 拋送查詢條件到頁面，並取回查詢結果內容
 	try:
@@ -250,15 +249,15 @@ else:
 conn = sqlite3.connect("market_price.sqlite")
 
 #抓取網站日期清單
-#dt_list = GET_DATE_LIST()
-dt_list = ['20160617', '20160624','20160701','20160707','20160715','20160722','20160729','20160805','20160812','20160819','20160826','20160902','20160910','20160914','20160923','20160930','20161007','20161014','20161021','20161028','20161104','20161111','20161118','20161125','20161202','20161209','20161216','20161223','20161230']	#for test 手動用
+dt_list = GET_DATE_LIST()
 #print(dt_list)
+#dt_list = ['20170616', '20170623', '20170630', '20170707']	#for test 手動用
 
 #依據所選模式抓取資料
 if len(dt_list) > 0:
 	#讀取上市櫃股票清單
 	strsql  = "select SEAR_COMP_ID,COMP_NAME, STOCK_TYPE from STOCK_COMP_LIST "
-	#strsql += "where SEAR_COMP_ID = '1312A.TW' "
+	#strsql += "where SEAR_COMP_ID = '1103.TW' "
 	strsql += "order by STOCK_TYPE, SEAR_COMP_ID "
 	#strsql += "limit 1"
 
