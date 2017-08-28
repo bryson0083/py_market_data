@@ -1,17 +1,15 @@
 # -*- coding: utf-8 -*-
 """
-選股程式~STOCK_SELECT_TYPE11
-STOCK_SELECT_TYPE11.py
+選股程式~STOCK_SELECT_TYPE12
+STOCK_SELECT_TYPE12.py
 
 @author: Bryson Xue
 @target_rul: 
 	
 @Note: 
-	選股條件，當天收盤價是剛突破20MA第一天，KD都位於低檔(以40為界)，日均量大於500張
+	選股條件，KD位於低檔(20以下)，日均量大於500張
 @Ref:
-	http://www.cmoney.tw/learn/course/technicals/topic/484
-	http://pythontrader.blogspot.tw/2015/05/ta-lib-usage-stoch.html
-	http://www.bituzi.com/2011/06/kd.html
+
 """
 
 import talib
@@ -64,16 +62,6 @@ def Stock_Ana(arg_stock, str_prev_date, str_today):
 		last_close = df['close'].tail(1)
 		prev_close = df['close'].shift(1).tail(1)
 
-		#計算20MA
-		ma20 = talib.MA(npy_close, timeperiod=20, matype=0)
-		df['ma20'] = ma20
-
-		#最近一個交易日20MA值
-		last_20ma = df['ma20'].tail(1)
-
-		#倒數第2個交易日20MA值
-		prev_20ma = df['ma20'].shift(1).tail(1)
-
 		# http://www.tadoc.org/indicator/STOCH.htm
 		slowk, slowd = talib.STOCH (npy_high,
 									npy_low,
@@ -87,11 +75,9 @@ def Stock_Ana(arg_stock, str_prev_date, str_today):
 		#print("slowk=" + str(slowk[-1]))
 		#print("slowd=" + str(slowd[-1]))
 
-		# 剛突破20MA第一天，KD都位於低檔(40以下)，日均量大於500張
-		if (prev_close.iloc[0] <= prev_20ma.iloc[0]) and \
-		   (last_close.iloc[0] > last_20ma.iloc[0]) and \
-		   (slowk[-1] <= 40) and \
-		   (slowd[-1] <= 40) and \
+		# KD位於低檔(20以下)，日均量大於500張
+		if (slowk[-1] <= 20) and \
+		   (slowd[-1] <= 20) and \
 		   (slowk[-1] > slowd[-1]) and \
 		   (avg_vol > 500):
 			#print("##" + arg_stock[0] + "##" + arg_stock[1]+ "##" + str(slowk[-1])+ "##" + str(slowd[-1]) + "##\n")
@@ -106,7 +92,7 @@ def Stock_Ana(arg_stock, str_prev_date, str_today):
 ############################################################################
 # Main                                                                     #
 ############################################################################
-print("Executing STOCK_SELECT_TYPE11...")
+print("Executing STOCK_SELECT_TYPE12...")
 
 global err_flag
 err_flag = False
@@ -122,7 +108,7 @@ str_prev_date = prev_date.strftime("%Y%m%d")
 dt=datetime.datetime.now()
 str_date = parser.parse(str(dt)).strftime("%Y%m%d")
 
-name = "STOCK_SELECT_TYPE11_" + str_date + ".txt"
+name = "STOCK_SELECT_TYPE12_" + str_date + ".txt"
 file = open(name, 'a', encoding = 'UTF-8')
 tStart = time.time()#計時開始
 file.write("\n\n\n*** LOG datetime  " + str(datetime.datetime.now()) + " ***\n")
@@ -168,7 +154,7 @@ else:
 
 if no_data_flag == False:
 	#結果寫入EXCEL檔
-	file_name = 'STOCK_SELECT_TYPE11_' + str_date + '.xlsx'
+	file_name = 'STOCK_SELECT_TYPE12_' + str_date + '.xlsx'
 	writer = pd.ExcelWriter(file_name, engine='xlsxwriter')
 	df_result.to_excel(writer, sheet_name='stock', index=False)
 	writer.save()
