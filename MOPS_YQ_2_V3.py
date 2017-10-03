@@ -57,7 +57,8 @@ def mode_c():
 		qq = "04"
 	elif mmdd >= "0515" and mmdd <= "0605":
 		qq = "01"
-	elif mmdd >= "0814" and mmdd <= "0905":
+	#elif mmdd >= "0814" and mmdd <= "0905":
+	elif mmdd >= "0814" and mmdd <= "0915":
 		qq = "02"
 	elif mmdd >= "1114" and mmdd <= "1205":
 		qq = "03"
