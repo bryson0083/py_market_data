@@ -7,4 +7,5 @@ call activate py34
 python STOCK_SELECT_TYPE09.py
 python STOCK_SELECT_TYPE10.py
 call deactivate
+python DAILY_MAIL.py
 exit
