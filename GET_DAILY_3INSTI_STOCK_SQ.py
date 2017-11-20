@@ -3,13 +3,18 @@
 櫃買中心三大法人個股買賣超日報~每日收盤CSV檔下載
 
 @author: Bryson Xue
+
 @target_rul: 
 	查詢網頁 => http://www.tpex.org.tw/web/stock/3insti/daily_trade/3itrade_hedge.php?l=zh-tw
 	CSV連結  => http://www.tpex.org.tw/web/stock/3insti/daily_trade/3itrade_hedge_download.php?l=zh-tw&se=EW&t=D&d=106/06/07&s=0,asc
+
 @Note: 
 	櫃買中心三大法人個股買賣超日報
 	下載網頁CSV檔
 	限定抓取資料，所有證券(不含權證、牛熊證)
+
+	櫃買中心下午16:00後，當天的新數據才會上線
+
 """
 import requests
 import time
@@ -28,7 +33,9 @@ def DO_WAIT():
 
 def GET_CSV(sear_date):
 	global err_flag
+	global file
 	rt_flag = False
+
 	file_name = "./daily_3insti_stock_data_sq/" + sear_date + ".csv"
 	is_existed = os.path.exists(file_name)
 
@@ -79,87 +86,91 @@ def GET_CSV(sear_date):
 
 	return rt_flag
 
-############################################################################
-# Main                                                                     #
-############################################################################
-print("Executing GET_DAILY_3INSTI_STOCK_SQ ...\n\n")
-global err_flag
-err_flag = False
+def MAIN_GET_DAILY_3INSTI_STOCK_SQ():
+	global err_flag
+	global file
+	err_flag = False
 
-#起訖日期(預設跑當天日期到往前推7天)
-dt = datetime.datetime.now()
-start_date = dt + datetime.timedelta(days=-7)
-start_date = parser.parse(str(start_date)).strftime("%Y%m%d")
-end_date = parser.parse(str(dt)).strftime("%Y%m%d")
+	print("Executing " + os.path.basename(__file__) + "...")
 
-#for需要時手動設定日期區間用(資料最早日期20141201起)
-#start_date = "20141201"
-#end_date = "20161231"
+	#起訖日期(預設跑當天日期到往前推7天)
+	dt = datetime.datetime.now()
+	start_date = dt + datetime.timedelta(days=-7)
+	start_date = parser.parse(str(start_date)).strftime("%Y%m%d")
+	end_date = parser.parse(str(dt)).strftime("%Y%m%d")
 
-#LOG檔
-str_date = str(datetime.datetime.now())
-str_date = parser.parse(str_date).strftime("%Y%m%d")
-name = "GET_DAILY_3INSTI_STOCK_SQ_LOG_" + str_date + ".txt"
-file = open(name, "a", encoding="UTF-8")
+	#for需要時手動設定日期區間用(資料最早日期20141201起)
+	#start_date = "20141201"
+	#end_date = "20161231"
 
-print_dt = str(str_date) + (' ' * 22)
-print("##############################################")
-print("##      櫃買中心三大法人個股買賣超日報      ##")
-print("##        所有證券(不含權證、牛熊證)        ##")                                    ##")
-print("##                                          ##")
-print("##  datetime: " + print_dt +               "##")
-print("##############################################")
+	#LOG檔
+	str_date = str(datetime.datetime.now())
+	str_date = parser.parse(str_date).strftime("%Y%m%d")
+	name = "GET_DAILY_3INSTI_STOCK_SQ_LOG_" + str_date + ".txt"
+	file = open(name, "a", encoding="UTF-8")
 
-print("結轉日期" + start_date + "~" + end_date)
+	print_dt = str(str_date) + (' ' * 22)
+	print("##############################################")
+	print("##      櫃買中心三大法人個股買賣超日報      ##")
+	print("##        所有證券(不含權證、牛熊證)        ##")                                    ##")
+	print("##                                          ##")
+	print("##  datetime: " + print_dt +               "##")
+	print("##############################################")
+	print("\n\n")
+	print("結轉日期" + start_date + "~" + end_date)
 
-tStart = time.time()#計時開始
-file.write("\n\n\n*** LOG datetime  " + str(datetime.datetime.now()) + " ***\n")
-file.write("結轉日期" + start_date + "~" + end_date + "\n")
+	tStart = time.time()#計時開始
+	file.write("\n\n\n*** LOG datetime  " + str(datetime.datetime.now()) + " ***\n")
+	file.write("Executing " + os.path.basename(__file__) + "...\n")
+	file.write("結轉日期" + start_date + "~" + end_date + "\n")
 
-date_fmt = "%Y%m%d"
-a = datetime.datetime.strptime(start_date, date_fmt)
-b = datetime.datetime.strptime(end_date, date_fmt)
-delta = b - a
-int_diff_date = delta.days
-#print("days=" + str(int_diff_date) + "\n")
+	date_fmt = "%Y%m%d"
+	a = datetime.datetime.strptime(start_date, date_fmt)
+	b = datetime.datetime.strptime(end_date, date_fmt)
+	delta = b - a
+	int_diff_date = delta.days
+	#print("days=" + str(int_diff_date) + "\n")
 
-i = 1
-cnt = 1
-dt = ""
-while i <= (int_diff_date+1):
-	#print(str(i) + "\n")
-	if i==1:
-		str_date = start_date
-	else:
-		str_date = parser.parse(str(dt)).strftime("%Y%m%d")
+	i = 1
+	cnt = 1
+	dt = ""
+	while i <= (int_diff_date+1):
+		#print(str(i) + "\n")
+		if i==1:
+			str_date = start_date
+		else:
+			str_date = parser.parse(str(dt)).strftime("%Y%m%d")
 
-	#print(str_date + "\n")
-	print("下載 " + str_date + " 三大法人個股買賣超資料.\n")
-	rt = GET_CSV(str_date)
-	
-	if rt == True:
-		cnt += 1
-		print(str_date + "下載成功.\n")
-	
-	dt = datetime.datetime.strptime(str_date, date_fmt).date()
-	dt = dt + relativedelta(days=1)	
-	i += 1
-	
-	# 累計抓滿有收盤資料90天就強制跳出迴圈
-	if cnt == 90:
-		print("抓滿90天，強制結束.")
-		file.write("抓滿90天，強制結束.\n")
-		break
+		#print(str_date + "\n")
+		print("下載 " + str_date + " 三大法人個股買賣超資料.\n")
+		rt = GET_CSV(str_date)
+		
+		if rt == True:
+			cnt += 1
+			print(str_date + "下載成功.\n")
+		
+		dt = datetime.datetime.strptime(str_date, date_fmt).date()
+		dt = dt + relativedelta(days=1)	
+		i += 1
+		
+		# 累計抓滿有收盤資料90天就強制跳出迴圈
+		#if cnt == 90:
+		#	print("抓滿90天，強制結束.")
+		#	file.write("抓滿90天，強制結束.\n")
+		#	break
 
-tEnd = time.time()#計時結束
-file.write ("\n\n\n結轉耗時 %f sec\n" % (tEnd - tStart)) #會自動做進位
-file.write("*** End LOG ***\n")
+	tEnd = time.time()#計時結束
+	file.write ("\n\n\n結轉耗時 %f sec\n" % (tEnd - tStart)) #會自動做進位
+	file.write("*** End LOG ***\n")
 
-# Close File
-file.close()
+	# Close File
+	file.close()
 
-#若執行過程無錯誤，執行結束後刪除log檔案
-if err_flag == False:
-	os.remove(name)
+	#若執行過程無錯誤，執行結束後刪除log檔案
+	if err_flag == False:
+		os.remove(name)
 
-print("End of prog...")
+	print("櫃買中心，上櫃三大法人個股買賣超日報CSV檔案下載結束...\n\n\n")
+
+if __name__ == '__main__':
+	MAIN_GET_DAILY_3INSTI_STOCK_SQ()	

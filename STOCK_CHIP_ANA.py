@@ -1,3 +1,24 @@
+# -*- coding: utf-8 -*-
+"""
+三大法人買賣超分析
+
+@author: Bryson Xue
+
+@target_rul: 
+
+@Note: 
+	每日計算上市櫃股票，三大法人買賣超狀況
+	並計算連續買超、賣超天數，並予以類別分類
+
+	買賣超代碼
+	A類: 三大法人均買超
+	B類: 外資、投信買超
+	C類: 三大法人均賣超
+	D類: 外資、投信賣超
+	E類: 三大法人行為出現轉折
+	Z類: 無明顯趨向(盤整)
+
+"""
 import sqlite3
 import pandas as pd
 import xlsxwriter
@@ -5,11 +26,15 @@ import datetime
 from datetime import date, timedelta
 from dateutil import parser
 from dateutil.relativedelta import relativedelta
-import sys
+import sys, os
 import time
 
 #個股籌碼分析
 def CHIP_ANA(arg_stock, str_prev_date, str_today):
+	global err_flag
+	global file
+	global conn
+
 	sear_comp_id = arg_stock[0]
 
 	#個股籌碼資料讀取
@@ -147,74 +172,97 @@ def CHIP_ANA(arg_stock, str_prev_date, str_today):
 	#print(df_result)
 	return df_result
 
-############################################################################
-# Main                                                                     #
-############################################################################
-print("Executing STOCK_CHIP_ANA ...\n\n")
+def MAIN_STOCK_CHIP_ANA():
+	global err_flag
+	global file
+	global conn
+	err_flag = False
 
-#產生日期區間(當天日期，往前推30天)
-today = datetime.datetime.now()
-prev_date = today + timedelta(days=-30)
+	print("Executing " + os.path.basename(__file__) + "...")
 
-str_today = today.strftime("%Y%m%d")
-str_prev_date = prev_date.strftime("%Y%m%d")
+	#產生日期區間(當天日期，往前推30天)
+	today = datetime.datetime.now()
+	prev_date = today + timedelta(days=-30)
 
-# 寫入LOG File
-dt=datetime.datetime.now()
-str_date = parser.parse(str(dt)).strftime("%Y%m%d")
+	str_today = today.strftime("%Y%m%d")
+	str_prev_date = prev_date.strftime("%Y%m%d")
 
-name = "STOCK_CHIP_ANA_" + str_date + ".txt"
-file = open(name, 'a', encoding = 'UTF-8')
-tStart = time.time()#計時開始
-file.write("\n\n\n*** LOG datetime  " + str(datetime.datetime.now()) + " ***\n")
-file.write("偵測日期區間:" + str_prev_date + "~" + str_today + "\n")
+	print_dt = str(str_today) + (' ' * 22)
+	print("##############################################")
+	print("##            三大法人買賣超分析            ##")
+	print("##                                          ##")
+	print("##                                          ##")
+	print("##  datetime: " + print_dt +               "##")
+	print("##############################################")
+	print("\n\n")
+	print("資料涵蓋範圍: " + str_prev_date + "~" + str_today + "\n")
 
-#建立資料庫連線
-conn = sqlite3.connect("market_price.sqlite")
+	# 寫入LOG File
+	dt=datetime.datetime.now()
+	str_date = parser.parse(str(dt)).strftime("%Y%m%d")
 
-strsql  = "select SEAR_COMP_ID,COMP_NAME, STOCK_TYPE from STOCK_COMP_LIST "
-#strsql += "where SEAR_COMP_ID='0050.TW' "
-strsql += "order by STOCK_TYPE, SEAR_COMP_ID "
+	name = "STOCK_CHIP_ANA_" + str_date + ".txt"
+	file = open(name, 'a', encoding = 'UTF-8')
+	tStart = time.time()#計時開始
+	file.write("\n\n\n*** LOG datetime  " + str(datetime.datetime.now()) + " ***\n")
+	file.write("Executing " + os.path.basename(__file__) + "...\n")
+	file.write("資料涵蓋範圍: " + str_prev_date + "~" + str_today + "\n")
 
-cursor = conn.execute(strsql)
-result = cursor.fetchall()
+	#建立資料庫連線
+	conn = sqlite3.connect("market_price.sqlite")
 
-df_result = pd.DataFrame()
-if len(result) > 0:
-	for stock in result:
-		#print(stock)
-		df = CHIP_ANA(stock, str_prev_date, str_today)
+	strsql  = "select SEAR_COMP_ID,COMP_NAME, STOCK_TYPE from STOCK_COMP_LIST "
+	#strsql += "where SEAR_COMP_ID='0050.TW' "
+	strsql += "order by STOCK_TYPE, SEAR_COMP_ID "
 
-		if len(df)>0:
-			df_result = pd.concat([df_result, df], ignore_index=True)
+	cursor = conn.execute(strsql)
+	result = cursor.fetchall()
 
-#關閉cursor
-cursor.close()
+	df_result = pd.DataFrame()
+	if len(result) > 0:
+		for stock in result:
+			#print(stock)
+			df = CHIP_ANA(stock, str_prev_date, str_today)
 
-#print(df_result)
+			if len(df)>0:
+				df_result = pd.concat([df_result, df], ignore_index=True)
 
-#資料進行排序
-if len(df_result)>0:
-	df_result = df_result.sort_values(by=['類別', '股票代號','外資買賣超天數','投信買賣超天數'], ascending=[True, True, True, True])
+	#關閉cursor
+	cursor.close()
 
-#結果寫入EXCEL檔
-file_name = 'STOCK_CHIP_ANA_' + str_date + '.xlsx'
-writer = pd.ExcelWriter(file_name, engine='xlsxwriter')
-df_result.to_excel(writer, sheet_name='stock', index=False)
-writer.save()
+	#print(df_result)
 
-#更換欄位名稱，將結果寫入資料庫
-df_result.columns = ['SEAR_COMP_ID', 'STOCK_NAME', 'FR_BAS_CNT', 'IT_BAS_CNT', 'DE_BAS_CNT', 'FR_BAS_VOL', 'IT_BAS_VOL', 'DE_BAS_VOL', 'RANK', 'REMARK']
-df_result.to_sql(name='REPORT_CHIP_ANA', con=conn, index=False, if_exists='replace')
+	#資料進行排序
+	if len(df_result)>0:
+		df_result = df_result.sort_values(by=['類別', '股票代號','外資買賣超天數','投信買賣超天數'], ascending=[True, True, True, True])
 
-#關閉資料庫連線
-conn.close()
+	#結果寫入EXCEL檔
+	file_name = 'STOCK_CHIP_ANA_' + str_date + '.xlsx'
+	writer = pd.ExcelWriter(file_name, engine='xlsxwriter')
+	df_result.to_excel(writer, sheet_name='stock', index=False)
+	writer.save()
 
-tEnd = time.time()#計時結束
-file.write ("\n\n\n結轉耗時 %f sec\n" % (tEnd - tStart)) #會自動做進位
-file.write("*** End LOG ***\n")
+	#更換欄位名稱，將結果寫入資料庫
+	df_result.columns = ['SEAR_COMP_ID', 'STOCK_NAME', 'FR_BAS_CNT', 'IT_BAS_CNT', 'DE_BAS_CNT', 'FR_BAS_VOL', 'IT_BAS_VOL', 'DE_BAS_VOL', 'RANK', 'REMARK']
+	df_result.to_sql(name='REPORT_CHIP_ANA', con=conn, index=False, if_exists='replace')
 
-# Close File
-file.close()
+	#關閉資料庫連線
+	conn.close()
 
-print("End of prog.")
+	tEnd = time.time()#計時結束
+	file.write ("\n\n\n結轉耗時 %f sec\n" % (tEnd - tStart)) #會自動做進位
+	file.write("*** End LOG ***\n")
+
+	# Close File
+	file.close()
+
+	#若執行過程無錯誤，執行結束後刪除log檔案
+	print(err_flag)
+	if err_flag == False:
+		print("sssssssssssssssssssssssssssss")
+		os.remove(name)
+
+	print("\n\n三大法人買賣超分析，執行結束...\n\n\n")
+
+if __name__ == '__main__':
+	MAIN_STOCK_CHIP_ANA()

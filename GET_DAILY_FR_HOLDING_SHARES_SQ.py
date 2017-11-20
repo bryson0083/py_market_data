@@ -3,12 +3,17 @@
 櫃買中心外資及陸資投資持股統計~每日收盤資料結轉CSV檔
 
 @author: Bryson Xue
+
 @target_rul: 
 	查詢網頁 => http://mops.twse.com.tw/server-java/t13sa150_otc?step=0
+
 @Note: 
 	櫃買中心外資及陸資投資持股統計
 	每日收盤資料結轉CSV檔
 	限定抓取資料，分類項目為"全部"
+
+	當天資料要21:30後才抓的到
+
 """
 import requests
 from bs4 import BeautifulSoup
@@ -25,11 +30,12 @@ def DO_WAIT():
 	#隨機等待一段時間
 	#sleep_sec = randint(30,120)
 	sleep_sec = randint(5,10)
-	print("間隔等待 " + str(sleep_sec) + " secs.\n")
+	print("間隔等待 " + str(sleep_sec) + " secs.")
 	time.sleep(sleep_sec)
 
 def GET_DATA(arg_date):
 	global err_flag
+	global file
 	rt_flag = True
 
 	file_name = "./daily_fr_holding_shares_sq/" + str(arg_date) + ".csv"
@@ -109,121 +115,127 @@ def GET_DATA(arg_date):
 		except Exception as e:
 			err_flag = True
 			rt_flag = False
-			print("$$$ 判斷網頁有資料，抓取出現異常，確認是否原始網頁結構已修改. $$$\n")
+			print("$$$ 判斷網頁有資料，抓取出現異常，確認是否原始網頁結構已修改. $$$")
 			print(str(e))
 			file.write("$$$ 判斷網頁有資料，抓取出現異常，確認是否原始網頁結構已修改. $$$\n")
 			file.write(str(e))
 	else:
-		print(str(arg_date) + "資料檔已存在，不再更新資料.\n\n")
-		file.write(str(arg_date) + "資料檔已存在，不再更新資料.\n\n")
+		rt_flag = True
+		print(str(arg_date) + " 資料檔已存在，不再更新資料.")
+		file.write(str(arg_date) + " 資料檔已存在，不再更新資料.\n\n")
 
 	return rt_flag
 
-############################################################################
-# Main                                                                     #
-############################################################################
-print("Executing GET_DAILY_FR_HOLDING_SHARES_SQ ...\n\n")
-global err_flag
-err_flag = False
+def MAIN_GET_DAILY_FR_HOLDING_SHARES_SQ(arg_mode='B'):
+	global err_flag
+	global file
+	err_flag = False
 
-#LOG檔
-str_date = str(datetime.datetime.now())
-str_date = parser.parse(str_date).strftime("%Y%m%d")
-name = "GET_DAILY_FR_HOLDING_SHARES_SQ_LOG_" + str_date + ".txt"
-file = open(name, "a", encoding="UTF-8")
+	print("Executing " + os.path.basename(__file__) + "...")
 
-print_dt = str(str_date) + (' ' * 22)
-print("##############################################")
-print("##      櫃買中心外資及陸資投資持股統計      ##")
-print("##              分類項目:全部               ##")
-print("##                                          ##")
-print("##  datetime: " + print_dt +               "##")
-print("##############################################")
+	#LOG檔
+	str_date = str(datetime.datetime.now())
+	str_date = parser.parse(str_date).strftime("%Y%m%d")
+	name = "GET_DAILY_FR_HOLDING_SHARES_SQ_LOG_" + str_date + ".txt"
+	file = open(name, "a", encoding="UTF-8")
 
-#依據所選模式，決定起訖日期
-#mode A:跑當天日期到往前推7天
-#mode B:跑昨天日期到往前推7天
-try:
-	run_mode = sys.argv[1]
-	run_mode = run_mode.upper()
-except Exception as e:
-	run_mode = "A"
+	print_dt = str(str_date) + (' ' * 22)
+	print("##############################################")
+	print("##      櫃買中心外資及陸資投資持股統計      ##")
+	print("##              分類項目:全部               ##")
+	print("##                                          ##")
+	print("##  datetime: " + print_dt +               "##")
+	print("##############################################")
 
-print("you choose mode " + run_mode)
+	#依據所選模式，決定起訖日期
+	#mode A:跑當天日期到往前推7天
+	#mode B:跑昨天日期到往前推7天
+	try:
+		#run_mode = sys.argv[1]
+		run_mode = arg_mode
+		run_mode = run_mode.upper()
+	except Exception as e:
+		run_mode = "A"
 
-dt = datetime.datetime.now()
-if run_mode == "A":
-	print("A: 抓取到當天資料...\n")
-	file.write("A: 抓取到當天資料...\n")
-	start_date = dt + datetime.timedelta(days=-7)
-	start_date = parser.parse(str(start_date)).strftime("%Y%m%d")
-	end_date = parser.parse(str(dt)).strftime("%Y%m%d")
-elif run_mode == "B":
-	print("B: 抓取到昨天資料...\n")
-	file.write("B: 抓取到昨天資料...\n")
-	start_date = dt + datetime.timedelta(days=-8)
-	start_date = parser.parse(str(start_date)).strftime("%Y%m%d")
-	end_date = dt + datetime.timedelta(days=-1)
-	end_date = parser.parse(str(end_date)).strftime("%Y%m%d")
-else:
-	print("模式錯誤，結束程式...\n")
-	file.write("模式錯誤，結束程式...\n")
-	sys.exit("模式錯誤，結束程式...\n")
+	print("you choose mode " + run_mode)
 
-#for需要時手動設定日期區間用(資料最早日期20040801起)
-#start_date = "20170101"
-#end_date = "20170615"
-
-print("結轉日期" + start_date + "~" + end_date)
-
-tStart = time.time()#計時開始
-file.write("\n\n\n*** LOG datetime  " + str(datetime.datetime.now()) + " ***\n")
-file.write("結轉日期" + start_date + "~" + end_date + "\n")
-
-date_fmt = "%Y%m%d"
-a = datetime.datetime.strptime(start_date, date_fmt)
-b = datetime.datetime.strptime(end_date, date_fmt)
-delta = b - a
-int_diff_date = delta.days
-#print("days=" + str(int_diff_date) + "\n")
-
-i = 1
-cnt = 1
-dt = ""
-while i <= (int_diff_date+1):
-	#print(str(i) + "\n")
-	if i==1:
-		str_date = start_date
+	dt = datetime.datetime.now()
+	if run_mode == "A":
+		print("A: 抓取到當天資料...\n")
+		file.write("A: 抓取到當天資料...\n")
+		start_date = dt + datetime.timedelta(days=-7)
+		start_date = parser.parse(str(start_date)).strftime("%Y%m%d")
+		end_date = parser.parse(str(dt)).strftime("%Y%m%d")
+	elif run_mode == "B":
+		print("B: 抓取到昨天資料...\n")
+		file.write("B: 抓取到昨天資料...\n")
+		start_date = dt + datetime.timedelta(days=-8)
+		start_date = parser.parse(str(start_date)).strftime("%Y%m%d")
+		end_date = dt + datetime.timedelta(days=-1)
+		end_date = parser.parse(str(end_date)).strftime("%Y%m%d")
 	else:
-		str_date = parser.parse(str(dt)).strftime("%Y%m%d")
+		print("模式錯誤，結束程式...\n")
+		file.write("模式錯誤，結束程式...\n")
+		sys.exit("模式錯誤，結束程式...\n")
 
-	#print(str_date + "\n")
-	print("下載 " + str_date + " OTC外資及陸資投資持股統計.\n")
-	rt = GET_DATA(str_date)
+	#for需要時手動設定日期區間用(資料最早日期20040801起)
+	#start_date = "20170101"
+	#end_date = "20170615"
 
-	if rt == True:
-		cnt += 1
-		print(str_date + " 抓取程序正常結束.\n")
-	
-	dt = datetime.datetime.strptime(str_date, date_fmt).date()
-	dt = dt + relativedelta(days=1)	
-	i += 1
-	
-	# 累計抓滿有收盤資料90天就強制跳出迴圈
-	#if cnt == 90:
-	#	print("抓滿90天，強制結束.")
-	#	file.write("抓滿90天，強制結束.\n")
-	#	break
+	print("結轉日期" + start_date + "~" + end_date)
 
-tEnd = time.time()#計時結束
-file.write("\n\n\n結轉耗時 %f sec\n" % (tEnd - tStart)) #會自動做進位
-file.write("*** End LOG ***\n")
+	tStart = time.time()#計時開始
+	file.write("\n\n\n*** LOG datetime  " + str(datetime.datetime.now()) + " ***\n")
+	file.write("Executing " + os.path.basename(__file__) + "...\n")
+	file.write("結轉日期" + start_date + "~" + end_date + "\n")
 
-# Close File
-file.close()
+	date_fmt = "%Y%m%d"
+	a = datetime.datetime.strptime(start_date, date_fmt)
+	b = datetime.datetime.strptime(end_date, date_fmt)
+	delta = b - a
+	int_diff_date = delta.days
+	#print("days=" + str(int_diff_date) + "\n")
 
-#若執行過程無錯誤，執行結束後刪除log檔案
-if err_flag == False:
-	os.remove(name)
+	i = 1
+	cnt = 1
+	dt = ""
+	while i <= (int_diff_date+1):
+		#print(str(i) + "\n")
+		if i==1:
+			str_date = start_date
+		else:
+			str_date = parser.parse(str(dt)).strftime("%Y%m%d")
 
-print("End of prog...")
+		#print(str_date + "\n")
+		print("下載 " + str_date + " OTC外資及陸資投資持股統計.")
+		rt = GET_DATA(str_date)
+
+		if rt == True:
+			cnt += 1
+			print(str_date + " 抓取程序正常結束.\n\n")
+		
+		dt = datetime.datetime.strptime(str_date, date_fmt).date()
+		dt = dt + relativedelta(days=1)	
+		i += 1
+		
+		# 累計抓滿有收盤資料90天就強制跳出迴圈
+		#if cnt == 90:
+		#	print("抓滿90天，強制結束.")
+		#	file.write("抓滿90天，強制結束.\n")
+		#	break
+
+	tEnd = time.time()#計時結束
+	file.write("\n\n\n結轉耗時 %f sec\n" % (tEnd - tStart)) #會自動做進位
+	file.write("*** End LOG ***\n")
+
+	# Close File
+	file.close()
+
+	#若執行過程無錯誤，執行結束後刪除log檔案
+	if err_flag == False:
+		os.remove(name)
+
+	print("櫃買中心外資及陸資投資持股統計，每日收盤CSV檔下載結束...\n\n\n")
+
+if __name__ == '__main__':
+	MAIN_GET_DAILY_FR_HOLDING_SHARES_SQ()	

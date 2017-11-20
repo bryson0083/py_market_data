@@ -1,20 +1,22 @@
+# -*- coding: utf-8 -*-
 """
 公司股利分派公告資料彙總表(上市、上櫃)
 
-說明:
-抓取年度台股上市櫃公司，除權息日期、現金股利、股票股利資料。
-分三種模式抓取
+@author: Bryson Xue
 
-mode_c: 自動抓取當年度除權息資料，在固定日期區間，每天轉一次資料，其他時間不動作。
-mode_h: 手動輸入年度，抓取該年度上市櫃公司除權息資料。
-mode_a: 抓取年度區間內，所有台股上市櫃公司除權息資料，須注意本模式結轉資料量大。
+@target_rul: 
+	公開觀測資訊站 => 彙總報表 => 股東會及股利 => 除權息公告
+	http://mops.twse.com.tw/mops/web/t108sb27
+	最早的資料從民國94年(2005年)起提供
 
-資料來源:
-公開觀測資訊站 => 彙總報表 => 股東會及股利 => 除權息公告
-http://mops.twse.com.tw/mops/web/t108sb27
-最早的資料從民國94年(2005年)起提供
+@Note: 
+	抓取年度台股上市櫃公司，除權息日期、現金股利、股票股利資料。
+	分三種模式抓取
 
-STOCK_DIVIDEND.py
+	mode_c: 自動抓取當年度除權息資料，在固定日期區間，每天轉一次資料，其他時間不動作。
+	mode_h: 手動輸入年度，抓取該年度上市櫃公司除權息資料。
+	mode_a: 抓取年度區間內，所有台股上市櫃公司除權息資料，須注意本模式結轉資料量大。
+
 """
 import time
 import pandas as pd
@@ -30,7 +32,6 @@ import codecs
 
 # 自動結轉資料
 def mode_c():
-	#有錯誤出現時，設定err_flag=True作為識別
 	global err_flag
 
 	#str_date = "2016-04-05"
@@ -70,10 +71,9 @@ def mode_c():
 		GET_STOCK_DIVIDEND(yyy, 'otc')
 
 	else:
-		file.write("mode_c: 未到批次結轉時間，執行結束...\n")
-		print("mode_c: date=" + mmdd + " 未到批次結轉時間，執行結束...")
 		err_flag = False
-
+		file.write("mode_c: date " + mmdd + " 未到批次結轉時間，執行結束...\n")
+		print("mode_c: date " + mmdd + " 未到批次結轉時間，執行結束...")
 
 # 手動輸入條件結轉資料
 def mode_h():
@@ -98,7 +98,6 @@ def mode_h():
 	# 開始抓取資料(上櫃)
 	print("結轉上櫃公司除權息資料...")
 	GET_STOCK_DIVIDEND(yyy, 'otc')
-
 
 # 跑特定區間，結轉資料(自行修改參數條件)
 def mode_a(): #最早的資料年度為2005(民國94年起)
@@ -133,8 +132,10 @@ def mode_a(): #最早的資料年度為2005(民國94年起)
 		print("隨機等待秒數=" + str(random_sec) + "...")
 		time.sleep(random_sec)
 
-
 def GET_STOCK_DIVIDEND(arg_yyy, arg_typek):
+	global err_flag
+	global file
+
 	headers = {'User-Agent':'User-Agent:Mozilla/5.0 (Macintosh; Intel Mac OS X 10_11_5) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/51.0.2704.106 Safari/537.36'}
 	session = requests.session()
 
@@ -160,14 +161,23 @@ def GET_STOCK_DIVIDEND(arg_yyy, arg_typek):
 			  "type": "1"
 			  }
 
-	r = requests.post(URL, data=payload, headers=headers)
+	try:
+		r = requests.post(URL, data=payload, headers=headers)
+		r.encoding = "utf-8"
+		sp = BeautifulSoup(r.text, 'html.parser')
+		#print(sp)
 
-	r.encoding = "utf-8"
-	sp = BeautifulSoup(r.text, 'html.parser')
-	#print(sp)
+	except Exception as e:
+		err_flag = True
+		print("Err: 異常中止，讀取來源網頁錯誤，請檢查來源網頁是否已變動.")
+		print(e.message)
+		print(e.args)
+		file.write("Err: 異常中止，讀取來源網頁錯誤，請檢查來源網頁是否已變動.\n")
+		file.write(e.message + "\n" + e.args + "\n\n")
+		return
 
 	"""
-	#for test 讀取存檔案的網頁，避免過度讀取網站
+	#for test 讀取以下載好的網頁檔案，避免過度讀取網站
 	f=codecs.open("C:/Users/bryson0083/Desktop/DIVI2015.html", 'r', encoding = 'utf-8')
 	#print(f.read())
 
@@ -218,12 +228,11 @@ def GET_STOCK_DIVIDEND(arg_yyy, arg_typek):
 	#資料庫處裡
 	proc_db(arg_yyy, all_df)
 
-
 def proc_db(arg_yyy, df):
-	#print(df)
-
-	#有錯誤出現時，設定err_flag=True作為識別
 	global err_flag
+	global file
+	global conn
+	#print(df)
 
 	#由於公開觀測資訊站，股利所屬年度，會有某些股票不一樣，因此
 	#這部分統一給值，不使用網頁上的表格資料。
@@ -325,8 +334,8 @@ def proc_db(arg_yyy, df):
 				err_flag = True
 				file.write(sqlstr + "\n")
 				file.write("DB Err:\n" + er.args[0] + "\n")
-				print (sqlstr + "\n")
-				print ("DB Err:\n" + er.args[0] + "\n")
+				print (sqlstr)
+				print ("DB Err:\n" + er.args[0])
 
 			# 關閉DB cursor
 			cursor.close()
@@ -337,72 +346,75 @@ def proc_db(arg_yyy, df):
 	else:
 		conn.execute("rollback")
 
+def MAIN_STOCK_DIVIDEND(arg_mode='C'):
+	global err_flag
+	global file
+	global conn
+	err_flag = False
 
-#############################################################################
-# Main																		#
-#############################################################################
-print("Executing STOCK_DIVIDEND...")
+	print("Executing " + os.path.basename(__file__) + "...")
 
-# 寫入LOG File
-dt = datetime.datetime.now()
+	# 寫入LOG File
+	dt = datetime.datetime.now()
+	str_date = str(dt)
+	str_date = parser.parse(str_date).strftime("%Y%m%d")
 
-print("##############################################")
-print("##             公開觀測資訊站               ##")
-print("##        股利分派情形彙總表資料讀取        ##")
-print("##                                          ##")
-print("##   datetime: " + str(dt) +            "   ##")
-print("##############################################")
+	name = "STOCK_DIVIDEND_LOG_" + str_date + ".txt"
+	file = open(name, 'a', encoding = 'UTF-8')
 
-str_date = str(dt)
-str_date = parser.parse(str_date).strftime("%Y%m%d")
+	print("##############################################")
+	print("##             公開觀測資訊站               ##")
+	print("##        股利分派情形彙總表資料讀取        ##")
+	print("##                                          ##")
+	print("##   datetime: " + str(dt) +            "   ##")
+	print("##############################################")
+	print("\n\n")
 
-name = "STOCK_DIVIDEND_LOG_" + str_date + ".txt"
-file = open(name, 'a', encoding = 'UTF-8')
+	tStart = time.time()#計時開始
+	file.write("\n\n\n*** LOG datetime  " + str(datetime.datetime.now()) + " ***\n")
+	file.write("Executing " + os.path.basename(__file__) + "...\n")
 
-global err_flag
-err_flag = False
+	# 建立資料庫連線
+	conn = sqlite3.connect('market_price.sqlite')
 
-tStart = time.time()#計時開始
-file.write("\n\n\n*** LOG datetime  " + str(datetime.datetime.now()) + " ***\n")
+	try:
+		#run_mode = sys.argv[1]
+		run_mode = arg_mode
+		run_mode = run_mode.upper()
+	except Exception as e:
+		run_mode = "C"
 
-# 建立資料庫連線
-conn = sqlite3.connect('market_price.sqlite')
+	print("you choose mode " + run_mode)
 
-try:
-	run_mode = sys.argv[1]
-	run_mode = run_mode.upper()
-except Exception as e:
-	run_mode = "C"
+	if run_mode == "C":
+		file.write("mode_c: 自動抓取當季，結轉資料...\n")
+		mode_c()
+	elif run_mode == "H":
+		file.write("mode_h: 手動輸入區間，結轉資料...\n")
+		mode_h()
+	elif run_mode == "A":
+		print("mode_a 跑特定區間，結轉資料...\n")
+		file.write("mode_a: 跑特定區間，結轉資料...\n")
+		mode_a()
+	else:
+		file.write("Err: 模式錯誤，結束程式...\n")
+		sys.exit("Err: 模式錯誤，結束程式...\n")
 
-print("you choose mode " + run_mode)
+	tEnd = time.time()#計時結束
+	file.write ("\n\n\n結轉耗時 %f sec\n" % (tEnd - tStart)) #會自動做進位
+	file.write("*** End LOG ***\n")
 
-if run_mode == "C":
-	file.write("mode_c: 自動抓取當季，結轉資料...\n")
-	mode_c()
-elif run_mode == "H":
-	file.write("mode_h: 手動輸入區間，結轉資料...\n")
-	mode_h()
-elif run_mode == "A":
-	print("mode_a 跑特定區間，結轉資料...\n")
-	file.write("mode_a: 跑特定區間，結轉資料...\n")
-	mode_a()
-else:
-	file.write("Err: 模式錯誤，結束程式...\n")
-	sys.exit("Err: 模式錯誤，結束程式...\n")
+	# 資料庫連線關閉
+	conn.close()
 
-tEnd = time.time()#計時結束
-file.write ("\n\n\n結轉耗時 %f sec\n" % (tEnd - tStart)) #會自動做進位
-file.write("*** End LOG ***\n")
+	# Close File
+	file.close()
 
-# 資料庫連線關閉
-conn.close()
+	#若執行過程無錯誤，執行結束後刪除log檔案
+	if err_flag == False:
+	    os.remove(name)
 
-# Close File
-file.close()
+	print("\n\n股利分派情形彙總表，資料讀取結束...\n\n\n")
 
-#print("err_flag=" + str(err_flag))
-#若執行過程無錯誤，執行結束後刪除log檔案
-#if err_flag == False:
-#    os.remove(name)
-
-print ("End of prog...")
+if __name__ == '__main__':
+	MAIN_STOCK_DIVIDEND('C')	

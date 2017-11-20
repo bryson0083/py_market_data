@@ -160,7 +160,7 @@ def proc_db(df, yyyy, qq):
 		eps = str(df.iloc[i][2])
 		eps = re.sub("[^-0-9^.]", "", eps) # 數字做格式控制
 
-		print(comp_id + "  " + comp_name + "   " + eps + "\n")
+		#print(comp_id + "  " + comp_name + "   " + eps + "\n")
 		# 最後維護日期時間
 		str_date = str(datetime.datetime.now())
 		date_last_maint = parser.parse(str_date).strftime("%Y%m%d")
@@ -247,10 +247,15 @@ def MOPS_YQ_1(yyy, qq, mkt_tp):
 		sp = BeautifulSoup(r.text, 'html.parser')
 		#print(sp)
 		table = sp.findAll('table', attrs={'class':'hasBorder'})  # tag-attrs
-	except:
+
+	except Exception as e:
 		err_flag = True
-		print("Err: 網頁讀取異常或該網頁無資料.")
-		file.write("Err: 網頁讀取異常或該網頁無資料.\n")
+		print("Err: 異常中止，讀取來源網頁錯誤，請檢查來源網頁是否已變動.")
+		print(e.message)
+		print(e.args)
+		file.write("Err: 異常中止，讀取來源網頁錯誤，請檢查來源網頁是否已變動.\n")
+		file.write(e.message + "\n" + e.args + "\n\n")
+		return
 
 	if err_flag == False:
 		yyyy = str(int(yyy) + 1911)
@@ -280,7 +285,7 @@ def MOPS_YQ_1(yyy, qq, mkt_tp):
 		# 資料庫存取
 		proc_db(all_df, yyyy, qq)
 
-def MAIN_MOPS_YQ_1():
+def MAIN_MOPS_YQ_1(arg_mode='C'):
 	global err_flag
 	global file
 	global conn
@@ -314,7 +319,8 @@ def MAIN_MOPS_YQ_1():
 	file.write("Executing " + os.path.basename(__file__) + "...\n\n")
 
 	try:
-		run_mode = sys.argv[1]
+		#run_mode = sys.argv[1]
+		run_mode = arg_mode
 		run_mode = run_mode.upper()
 	except Exception as e:
 		run_mode = "C"

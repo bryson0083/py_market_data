@@ -91,7 +91,7 @@ def READ_DAY_QUO(arg_sear_comp_id, arg_date_st, arg_date_ed):
 	#關閉cursor
 	cursor.close()
 
-	print(arg_sear_comp_id + ",open=" + str(mon_open) + ", close=" + str(mon_close) + ",high=" + str(mon_high) + ",low=" + str(mon_low) + ",vol=" + str(mon_vol) + ",lat_dt=" + mon_close_dt)
+	#print(arg_sear_comp_id + ",open=" + str(mon_open) + ", close=" + str(mon_close) + ",high=" + str(mon_high) + ",low=" + str(mon_low) + ",vol=" + str(mon_vol) + ",lat_dt=" + mon_close_dt)
 
 	# 最後維護日期時間
 	str_date = str(datetime.datetime.now())

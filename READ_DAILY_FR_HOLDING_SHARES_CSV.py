@@ -3,6 +3,7 @@
 證交所外資及陸資投資持股統計~每日收盤CSV檔讀取並寫入資料庫
 
 @author: Bryson Xue
+
 @target_rul: 
 
 @Note: 
@@ -21,14 +22,16 @@ import time
 
 def READ_CSV(arg_date):
 	global err_flag
-	print("讀取" + arg_date + "證交所外資及陸資投資持股統計CSV資料檔.\n")
+	global file
+
+	print("讀取" + arg_date + " 證交所外資及陸資投資持股統計CSV資料檔.")
 	file_name = "./daily_fr_holding_shares/" + arg_date + ".csv"
 	
 	#判斷CSV檔案是否存在，若無檔案則跳回主程式
 	is_existed = os.path.exists(file_name)
 	if is_existed == False:
-		print(arg_date + "無報價CSV檔.\n")
-		file.write(arg_date + "無報價CSV檔.\n")
+		print(arg_date + " 無報價CSV檔.\n")
+		file.write(arg_date + " 無報價CSV檔.\n")
 		return
 	
 	#讀取每日報價CSV檔
@@ -46,7 +49,7 @@ def READ_CSV(arg_date):
 	for item in quo_list:
 		for j in item:
 			if j == "當天無交易資料":
-				print(arg_date + "當天未開盤，無交易資料.\n")
+				print(arg_date + " 當天未開盤，無交易資料.\n")
 				return
 	
 	#取得要讀取的資料起點位置(識別"證券代號")
@@ -82,8 +85,9 @@ def READ_CSV(arg_date):
 	except Exception as e:
 		print("$$$ Err:" + arg_date + " 外資及陸資投資持股統計CSV資料讀取異常. $$$")
 		print(e)
-		file.write("$$$ Err:" + arg_date + " 外資及陸資投資持股統計CSV資料讀取異常. $$$")
+		file.write("$$$ Err:" + arg_date + " 外資及陸資投資持股統計CSV資料讀取異常. $$$\n")
 		file.write(e)
+		file.write("\n")
 		err_flag = True
 	
 	#all_data list拋到pandas
@@ -96,6 +100,7 @@ def READ_CSV(arg_date):
 
 def STORE_DB(arg_df, arg_date):
 	global err_flag
+	global file
 
 	#print(arg_df)
 	quo_date = arg_date
@@ -168,38 +173,19 @@ def STORE_DB(arg_df, arg_date):
 			strsql += "'" + time_last_maint + "',"
 			strsql += "'" + prog_last_maint + "' "
 			strsql += ")"
-
-		else:
-			#print(comp_id + "有資料\n")
-			#針對現有資料更新
-			strsql  = "update STOCK_FR_HOLDING_SHARES set "
-			strsql += "ISSUED_SHARES=" + str(issued_shares) + ","
-			strsql += "FR_INV_BLS=" + str(fr_inv_bls) + ","
-			strsql += "FR_HOLDING_SHARES=" + str(fr_holding_shares) + ","
-			strsql += "FR_INV_BLS_RT=" + str(fr_inv_bls_rt) + ","
-			strsql += "FR_HOLDING_RT=" + str(fr_holding_rt) + ","
-			strsql += "FR_INV_UPLIMIT=" + str(fr_inv_uplimit) + ","
-			strsql += "CN_INV_UPLIMIT=" + str(cn_inv_uplimit) + ","
-			strsql += "LAST_CLAIM_DATE='" + str(last_claim_date) + "',"
-			strsql += "DATE_LAST_MAINT='" + date_last_maint + "',"
-			strsql += "TIME_LAST_MAINT='" + time_last_maint + "',"
-			strsql += "PROG_LAST_MAINT='" + prog_last_maint + "' "
-			strsql += "where "
-			strsql += "QUO_DATE = '" + quo_date + "' and "
-			strsql += "SEAR_COMP_ID='" + comp_id + "' "
 			
-		try:
-			#print(strsql)
-			conn.execute(strsql)
-		except sqlite3.Error as er:
-			commit_flag = False
-			err_flag = True
-			print("insert/update STOCK_FR_HOLDING_SHARES er=" + er.args[0] + "\n")
-			print(comp_id + " " + comp_name + " " + quo_date + "資料異常.\n")
-			print(strsql + "\n")
-			file.write("insert/update STOCK_FR_HOLDING_SHARES er=" + er.args[0] + "\n")
-			file.write(comp_id + " " + comp_name + " " + quo_date + "資料異常.\n")
-			file.write(strsql + "\n")
+			try:
+				#print(strsql)
+				conn.execute(strsql)
+			except sqlite3.Error as er:
+				commit_flag = False
+				err_flag = True
+				print("insert STOCK_FR_HOLDING_SHARES er=" + er.args[0])
+				print(comp_id + " " + comp_name + " " + quo_date + "資料異常.")
+				print(strsql + "\n")
+				file.write("insert STOCK_FR_HOLDING_SHARES er=" + er.args[0] + "\n")
+				file.write(comp_id + " " + comp_name + " " + quo_date + "資料異常.\n")
+				file.write(strsql + "\n")
 
 		#關閉cursor
 		cursor.close()
@@ -207,8 +193,8 @@ def STORE_DB(arg_df, arg_date):
 	# 最後commit
 	if commit_flag == True:
 		conn.commit()
-		print(quo_date + "證交所外資及陸資投資持股統計，寫入成功.\n")
-		file.write(quo_date + "證交所外資及陸資投資持股統計，寫入成功.\n")
+		print(quo_date + " 證交所外資及陸資投資持股統計，寫入成功.\n")
+		file.write(quo_date + " 證交所外資及陸資投資持股統計，寫入成功.\n")
 	else:
 		conn.execute("rollback")
 		print(quo_date + "證交所外資及陸資投資持股統計，寫入失敗Rollback.\n")
@@ -217,78 +203,82 @@ def STORE_DB(arg_df, arg_date):
 	#關閉資料庫連線
 	conn.close
 
-############################################################################
-# Main                                                                     #
-############################################################################
-print("Executing READ_DAILY_FR_HOLDING_SHARES_CSV...")
-global err_flag
-err_flag = False
+def MAIN_READ_DAILY_FR_HOLDING_SHARES_CSV():
+	global err_flag
+	global file
+	err_flag = False
 
-#起訖日期(預設跑當天日期到往前推7天)
-dt = datetime.datetime.now()
-start_date = dt + datetime.timedelta(days=-7)
-start_date = parser.parse(str(start_date)).strftime("%Y%m%d")
-end_date = parser.parse(str(dt)).strftime("%Y%m%d")
+	print("Executing " + os.path.basename(__file__) + "...")
 
-#for需要時手動設定日期區間用
-#start_date = "20170101"
-#end_date = "20170619"
+	#起訖日期(預設跑當天日期到往前推7天)
+	dt = datetime.datetime.now()
+	start_date = dt + datetime.timedelta(days=-7)
+	start_date = parser.parse(str(start_date)).strftime("%Y%m%d")
+	end_date = parser.parse(str(dt)).strftime("%Y%m%d")
 
-# 寫入LOG File
-str_date = str(datetime.datetime.now())
-str_date = parser.parse(str_date).strftime("%Y%m%d")
-name = "READ_DAILY_FR_HOLDING_SHARES_CSV_LOG_" + str_date + ".txt"
-file = open(name, 'a', encoding = 'UTF-8')
+	#for需要時手動設定日期區間用
+	#start_date = "20170101"
+	#end_date = "20170619"
 
-print_dt = str(str_date) + (' ' * 22)
-print("##############################################")
-print("##       證交所外資及陸資投資持股統計       ##")
-print("##              CSV檔寫入資料庫             ##")
-print("##                                          ##")
-print("##  datetime: " + print_dt +               "##")
-print("##############################################")
+	# 寫入LOG File
+	str_date = str(datetime.datetime.now())
+	str_date = parser.parse(str_date).strftime("%Y%m%d")
+	name = "READ_DAILY_FR_HOLDING_SHARES_CSV_LOG_" + str_date + ".txt"
+	file = open(name, 'a', encoding = 'UTF-8')
 
-print("結轉日期" + start_date + "~" + end_date)
+	print_dt = str(str_date) + (' ' * 22)
+	print("##############################################")
+	print("##       證交所外資及陸資投資持股統計       ##")
+	print("##              CSV檔寫入資料庫             ##")
+	print("##                                          ##")
+	print("##  datetime: " + print_dt +               "##")
+	print("##############################################")
+	print("\n\n")
+	print("結轉日期" + start_date + "~" + end_date + "\n")
 
-tStart = time.time()#計時開始
-file.write("\n\n\n*** LOG datetime  " + str(datetime.datetime.now()) + " ***\n")
-file.write("結轉日期區間:" + start_date + "~" + end_date + "\n")
+	tStart = time.time()#計時開始
+	file.write("\n\n\n*** LOG datetime  " + str(datetime.datetime.now()) + " ***\n")
+	file.write("Executing " + os.path.basename(__file__) + "...\n")
+	file.write("結轉日期區間:" + start_date + "~" + end_date + "\n\n")
 
-#計算區間的天數，作為迴圈終止條件
-date_fmt = "%Y%m%d"
-a = datetime.datetime.strptime(start_date, date_fmt)
-b = datetime.datetime.strptime(end_date, date_fmt)
-delta = b - a
-int_diff_date = delta.days + 1
-#print("days=" + str(int_diff_date) + "\n")
+	#計算區間的天數，作為迴圈終止條件
+	date_fmt = "%Y%m%d"
+	a = datetime.datetime.strptime(start_date, date_fmt)
+	b = datetime.datetime.strptime(end_date, date_fmt)
+	delta = b - a
+	int_diff_date = delta.days + 1
+	#print("days=" + str(int_diff_date) + "\n")
 
-i = 1
-dt = ""
-while i <= int_diff_date:
-	#print(str(i) + "\n")
-	if i==1:
-		str_date = start_date
-	else:
-		str_date = parser.parse(str(dt)).strftime("%Y%m%d")
+	i = 1
+	dt = ""
+	while i <= int_diff_date:
+		#print(str(i) + "\n")
+		if i==1:
+			str_date = start_date
+		else:
+			str_date = parser.parse(str(dt)).strftime("%Y%m%d")
+			
+		#print(str_date + "\n")
+		#讀取日期當天報價CSV檔
+		READ_CSV(str_date)
 		
-	#print(str_date + "\n")
-	#讀取日期當天報價CSV檔
-	READ_CSV(str_date)
-	
-	#日期往後推一天
-	dt = datetime.datetime.strptime(str_date, date_fmt).date()
-	dt = dt + relativedelta(days=1)
-	i += 1
+		#日期往後推一天
+		dt = datetime.datetime.strptime(str_date, date_fmt).date()
+		dt = dt + relativedelta(days=1)
+		i += 1
 
-tEnd = time.time()#計時結束
-file.write ("\n\n\n結轉耗時 %f sec\n" % (tEnd - tStart)) #會自動做進位
-file.write("*** End LOG ***\n")
+	tEnd = time.time()#計時結束
+	file.write ("\n\n\n結轉耗時 %f sec\n" % (tEnd - tStart)) #會自動做進位
+	file.write("*** End LOG ***\n")
 
-# Close File
-file.close()
+	# Close File
+	file.close()
 
-#若執行過程無錯誤，執行結束後刪除log檔案
-if err_flag == False:
-	os.remove(name)
+	#若執行過程無錯誤，執行結束後刪除log檔案
+	if err_flag == False:
+		os.remove(name)
 
-print("End of prog...")
+	print("\n\n證交所外資及陸資投資持股統計，每日收盤CSV檔資料庫處理結束...\n\n\n")
+
+if __name__ == '__main__':
+	MAIN_READ_DAILY_FR_HOLDING_SHARES_CSV()

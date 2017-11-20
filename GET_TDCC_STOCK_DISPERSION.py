@@ -3,8 +3,10 @@
 集保中心~集保戶股權分散表查詢，資料抓取
 
 @author: Bryson Xue
+
 @target_rul: 
 	查詢網頁 => http://www.tdcc.com.tw/smWeb/QryStock.jsp
+
 @Note: 
 	集保中心~集保戶股權分散表查詢
 	每日資料結轉寫入資料庫
@@ -12,6 +14,7 @@
 
 @Ref:
 	http://www.largitdata.com/course/53/
+
 """
 import sqlite3
 import requests
@@ -27,6 +30,7 @@ import sys
 
 def GET_DATA(arg_stock, arg_date):
 	global err_flag
+	global file
 
 	#檢查資料庫是否已有資料存在，若已有資料則略過，減少網站讀取
 	rt_cnt = CHK_DATA_EXIST(arg_stock[0], arg_date)
@@ -50,10 +54,12 @@ def DO_WAIT():
 	#隨機等待一段時間
 	#sleep_sec = randint(30,120)
 	sleep_sec = randint(5,10)
-	print("間隔等待 " + str(sleep_sec) + " secs.\n")
+	print("間隔等待 " + str(sleep_sec) + " secs.")
 	time.sleep(sleep_sec)
 
 def CHK_DATA_EXIST(arg_sear_comp_id, arg_quo_date):
+	global conn
+
 	#檢查當天該股票是否已有資料
 	strsql  = "select count(*) from STOCK_DISPERSION "
 	strsql += "where "
@@ -71,6 +77,7 @@ def CHK_DATA_EXIST(arg_sear_comp_id, arg_quo_date):
 
 def GET_DATE_LIST():
 	global err_flag
+	global file
 
 	headers = {'User-Agent':'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/58.0.3029.110 Safari/537.36'}
 	#session = requests.session()
@@ -96,9 +103,10 @@ def GET_DATE_LIST():
 
 	return dt_list
 
-
 def GET_WEB_DATA(arg_stock, arg_date):
 	global err_flag
+	global file
+	global conn
 	rt_flag = True
 
 	sear_comp_id = arg_stock[0]
@@ -193,114 +201,120 @@ def GET_WEB_DATA(arg_stock, arg_date):
 			err_flag = True
 			rt_flag = False
 			conn.execute("rollback")
-			print("insert STOCK_DISPERSION er=" + er.args[0] + "\n")
-			print(strsql + "\n")
+			print("insert STOCK_DISPERSION er=" + er.args[0])
+			print(strsql)
 			file.write("insert STOCK_DISPERSION er=" + er.args[0] + "\n")
 			file.write(strsql + "\n")
 
 	return rt_flag
 
-############################################################################
-# Main                                                                     #
-############################################################################
-print("Executing GET_TDCC_STOCK_DISPERSION ...\n\n")
-global err_flag
-err_flag = False
+def MAIN_GET_TDCC_STOCK_DISPERSION(arg_mode='A'):
+	global err_flag
+	global file
+	global conn
+	err_flag = False
 
-#LOG檔
-str_date = str(datetime.datetime.now())
-str_date = parser.parse(str_date).strftime("%Y%m%d")
-name = "GET_TDCC_STOCK_DISPERSION_LOG_" + str_date + ".txt"
-file = open(name, "a", encoding="UTF-8")
+	print("Executing " + os.path.basename(__file__) + "...")
 
-print_dt = str(str_date) + (' ' * 22)
-print("##############################################")
-print("##           集保戶股權分散表查詢           ##")
-print("##             (上市、上櫃股票)             ##")
-print("##                                          ##")
-print("##  datetime: " + print_dt +               "##")
-print("##############################################")
+	#LOG檔
+	str_date = str(datetime.datetime.now())
+	str_date = parser.parse(str_date).strftime("%Y%m%d")
+	name = "GET_TDCC_STOCK_DISPERSION_LOG_" + str_date + ".txt"
+	file = open(name, "a", encoding="UTF-8")
 
-tStart = time.time()#計時開始
-file.write("\n\n\n*** LOG datetime  " + str(datetime.datetime.now()) + " ***\n")
+	print_dt = str(str_date) + (' ' * 22)
+	print("##############################################")
+	print("##           集保戶股權分散表查詢           ##")
+	print("##             (上市、上櫃股票)             ##")
+	print("##                                          ##")
+	print("##  datetime: " + print_dt +               "##")
+	print("##############################################")
 
-#依據所選模式，決定抓取方式
-#mode A:抓取最近一周資料
-#mode B:抓取日期清單所有資料
-try:
-	run_mode = sys.argv[1]
-	run_mode = run_mode.upper()
-except Exception as e:
-	run_mode = "B"
+	tStart = time.time()#計時開始
+	file.write("\n\n\n*** LOG datetime  " + str(datetime.datetime.now()) + " ***\n")
+	file.write("Executing " + os.path.basename(__file__) + "...\n")
 
-print("you choose mode " + run_mode)
-if run_mode == "A":
-	print("選取模式 A: 抓取最近一周資料...\n")
-	file.write("選取模式 A: 抓取最近一周資料...\n")
-elif run_mode == "B":
-	print("選取模式 B: 抓取日期清單所有資料...\n")
-	file.write("選取模式 B: 抓取日期清單所有資料...\n")
-else:
-	print("模式錯誤，結束程式...\n")
-	file.write("模式錯誤，結束程式...\n")
-	sys.exit("模式錯誤，結束程式...\n")
+	#依據所選模式，決定抓取方式
+	#mode A:抓取最近一周資料
+	#mode B:抓取日期清單所有資料
+	try:
+		#run_mode = sys.argv[1]
+		run_mode = arg_mode
+		run_mode = run_mode.upper()
+	except Exception as e:
+		run_mode = "A"
 
-#建立資料庫連線
-conn = sqlite3.connect("market_price.sqlite")
+	print("you choose mode " + run_mode)
+	if run_mode == "A":
+		print("選取模式 A: 抓取最近一周資料...\n")
+		file.write("選取模式 A: 抓取最近一周資料...\n")
+	elif run_mode == "B":
+		print("選取模式 B: 抓取日期清單所有資料...\n")
+		file.write("選取模式 B: 抓取日期清單所有資料...\n")
+	else:
+		print("模式錯誤，結束程式...\n")
+		file.write("模式錯誤，結束程式...\n")
+		sys.exit("模式錯誤，結束程式...\n")
 
-#抓取網站日期清單
-dt_list = GET_DATE_LIST()
-#print(dt_list)
-#dt_list = ['20170616', '20170623', '20170630', '20170707']	#for test 手動用
+	#建立資料庫連線
+	conn = sqlite3.connect("market_price.sqlite")
 
-#依據所選模式抓取資料
-if len(dt_list) > 0:
-	#讀取上市櫃股票清單
-	strsql  = "select SEAR_COMP_ID,COMP_NAME, STOCK_TYPE from STOCK_COMP_LIST "
-	#strsql += "where SEAR_COMP_ID = '1103.TW' "
-	strsql += "order by STOCK_TYPE, SEAR_COMP_ID "
-	#strsql += "limit 1"
+	#抓取網站日期清單
+	dt_list = GET_DATE_LIST()
+	#print(dt_list)
+	#dt_list = ['20170616', '20170623', '20170630', '20170707']	#for test 手動用
 
-	cursor = conn.execute(strsql)
-	result = cursor.fetchall()
+	#依據所選模式抓取資料
+	if len(dt_list) > 0:
+		#讀取上市櫃股票清單
+		strsql  = "select SEAR_COMP_ID,COMP_NAME, STOCK_TYPE from STOCK_COMP_LIST "
+		#strsql += "where SEAR_COMP_ID = '1103.TW' "
+		strsql += "order by STOCK_TYPE, SEAR_COMP_ID "
+		#strsql += "limit 1"
 
-	#關閉cursor
-	cursor.close()
+		cursor = conn.execute(strsql)
+		result = cursor.fetchall()
 
-	if len(result) > 0:
-		for stock in result:
-			#print(stock)
-			if run_mode == "A":
-				str_date = str(dt_list[-1:][0])
-				GET_DATA(stock, str_date)
-			else:	#模式B:抓取日期清單所有股票資料
-				for dt in dt_list:
-					str_date = str(dt)
+		#關閉cursor
+		cursor.close()
+
+		if len(result) > 0:
+			for stock in result:
+				#print(stock)
+				if run_mode == "A":
+					str_date = str(dt_list[-1:][0])
 					GET_DATA(stock, str_date)
+				else:	#模式B:抓取日期清單所有股票資料
+					for dt in dt_list:
+						str_date = str(dt)
+						GET_DATA(stock, str_date)
+
+		else:
+			err_flag = True
+			print("$$$ 未取得公司清單資料. $$$")
+			file.write("$$$ 未取得公司清單資料. $$$")
 
 	else:
 		err_flag = True
-		print("$$$ 未取得公司清單資料. $$$")
-		file.write("$$$ 未取得公司清單資料. $$$")
-
-else:
-	err_flag = True
-	print("$$$ 未取得日期清單資料，請確認來源網頁是否正常 $$$")
-	file.write("$$$ 未取得日期清單資料，請確認來源網頁是否正常 $$$")
+		print("$$$ 未取得日期清單資料，請確認來源網頁是否正常 $$$")
+		file.write("$$$ 未取得日期清單資料，請確認來源網頁是否正常 $$$")
 
 
-tEnd = time.time()#計時結束
-file.write("\n\n\n結轉耗時 %f sec\n" % (tEnd - tStart)) #會自動做進位
-file.write("*** End LOG ***\n")
+	tEnd = time.time()#計時結束
+	file.write("\n\n\n結轉耗時 %f sec\n" % (tEnd - tStart)) #會自動做進位
+	file.write("*** End LOG ***\n")
 
-# Close File
-file.close()
+	# Close File
+	file.close()
 
-#關閉資料庫連線
-conn.close()
+	#關閉資料庫連線
+	conn.close()
 
-#若執行過程無錯誤，執行結束後刪除log檔案
-if err_flag == False:
-	os.remove(name)
+	#若執行過程無錯誤，執行結束後刪除log檔案
+	if err_flag == False:
+		os.remove(name)
 
-print("End of prog...")
+	print("\n\n集保中心~集保戶股權分散表查詢，資料抓取結束...\n\n\n")
+
+if __name__ == '__main__':
+	MAIN_GET_TDCC_STOCK_DISPERSION()	

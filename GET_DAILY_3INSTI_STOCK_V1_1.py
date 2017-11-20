@@ -13,6 +13,8 @@
 	下載網頁CSV檔
 	限定抓取資料，證券全部(不含權證、牛熊證、可展延牛熊證)
 
+	證交所下午16:00後，當天的新數據才會上線
+
 """
 import requests
 import time
@@ -31,7 +33,9 @@ def DO_WAIT():
 
 def GET_CSV(sear_date):
 	global err_flag
+	global file
 	rt_flag = False
+
 	file_name = "./daily_3insti_stock_data/" + sear_date + ".csv"
 	is_existed = os.path.exists(file_name)
 	str_url = "http://www.tse.com.tw/fund/T86?response=csv&date=" + sear_date + "&selectType=ALLBUT0999"
@@ -79,9 +83,11 @@ def GET_CSV(sear_date):
 	return rt_flag
 
 def MAIN_GET_DAILY_3INSTI_STOCK():
-	print("Executing GET_DAILY_3INSTI_STOCK ...\n\n")
 	global err_flag
+	global file
 	err_flag = False
+
+	print("Executing " + os.path.basename(__file__) + "...")
 
 	#起訖日期(預設跑當天日期到往前推7天)
 	dt = datetime.datetime.now()
@@ -106,11 +112,12 @@ def MAIN_GET_DAILY_3INSTI_STOCK():
 	print("##                                          ##")
 	print("##  datetime: " + print_dt +               "##")
 	print("##############################################")
-
+	print("\n\n")
 	print("結轉日期" + start_date + "~" + end_date)
 
 	tStart = time.time()#計時開始
 	file.write("\n\n\n*** LOG datetime  " + str(datetime.datetime.now()) + " ***\n")
+	file.write("Executing " + os.path.basename(__file__) + "...\n")
 	file.write("結轉日期" + start_date + "~" + end_date + "\n")
 
 	date_fmt = "%Y%m%d"
@@ -143,10 +150,10 @@ def MAIN_GET_DAILY_3INSTI_STOCK():
 		i += 1
 		
 		# 累計抓滿有收盤資料90天就強制跳出迴圈
-		if cnt == 90:
-			print("抓滿90天，強制結束.")
-			file.write("抓滿90天，強制結束.\n")
-			break
+		#if cnt == 90:
+		#	print("抓滿90天，強制結束.")
+		#	file.write("抓滿90天，強制結束.\n")
+		#	break
 
 	tEnd = time.time()#計時結束
 	file.write ("\n\n\n結轉耗時 %f sec\n" % (tEnd - tStart)) #會自動做進位

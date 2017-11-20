@@ -130,7 +130,7 @@ while i <= (int_diff_date+1):
 		str_date = parser.parse(str(dt)).strftime("%Y%m%d")
 
 	#print(str_date + "\n")
-	print("下載 " + str_date + " 三大法人個股買賣超資料.\n")
+	print("下載 " + str_date + " 三大法人個股買賣超資料.")
 	rt = GET_CSV(str_date)
 	
 	if rt == True:

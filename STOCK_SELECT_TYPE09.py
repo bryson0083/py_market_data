@@ -1,3 +1,28 @@
+# -*- coding: utf-8 -*-
+"""
+技術分析選股 TYPE 9
+
+@author: Bryson Xue
+
+@target_rul: 
+
+@Note: 
+	上市櫃股票，3、5、8日均線糾結選股(當天大漲) + 個股當日三大法人買賣超資訊
+	並加上以上過濾條件
+	A. 3條均線變異數介於0~1間(變異數值太大，線就離太遠了)
+	B. 近六天成交量平均量成長30%以上，且日均量500張以上
+	C. 當天收盤漲幅3%以上(當天上漲3%以上)
+	D. 最近一交易日，收盤價在8MA跟50MA之上
+
+	買賣超代碼
+	A類: 三大法人均買超
+	B類: 外資、投信買超
+	C類: 三大法人均賣超
+	D類: 外資、投信賣超
+	E類: 三大法人行為出現轉折
+	Z類: 無明顯趨向(盤整)
+
+"""
 import talib
 from talib import MA_Type
 import sqlite3
@@ -14,6 +39,10 @@ import math, statistics
 
 #個股資料讀取判斷
 def Stock_Ana(arg_stock, str_prev_date, str_today):
+	global err_flag
+	global file
+	global conn
+	
 	sear_comp_id = arg_stock[0]
 	#日線資料讀取
 	strsql  = "select quo_date, open, high, low, close, vol from STOCK_QUO "
@@ -132,77 +161,93 @@ def Stock_Ana(arg_stock, str_prev_date, str_today):
 
 	return df_result
 
-############################################################################
-# Main                                                                     #
-############################################################################
-global err_flag
-err_flag = False
+def MAIN_STOCK_SELECT_TYPE09():
+	global err_flag
+	global file
+	global conn
+	err_flag = False
 
-#產生日期區間(當天日期，往前推90天)
-today = datetime.datetime.now()
-prev_date = today + timedelta(days=-90)
+	print("Executing " + os.path.basename(__file__) + "...")
 
-str_today = today.strftime("%Y%m%d")
-str_prev_date = prev_date.strftime("%Y%m%d")
+	#產生日期區間(當天日期，往前推90天)
+	today = datetime.datetime.now()
+	prev_date = today + timedelta(days=-90)
 
-# 寫入LOG File
-dt=datetime.datetime.now()
-str_date = parser.parse(str(dt)).strftime("%Y%m%d")
+	str_today = today.strftime("%Y%m%d")
+	str_prev_date = prev_date.strftime("%Y%m%d")
 
-name = "STOCK_SELECT_TYPE09_" + str_date + ".txt"
-file = open(name, 'a', encoding = 'UTF-8')
-tStart = time.time()#計時開始
-file.write("\n\n\n*** LOG datetime  " + str(datetime.datetime.now()) + " ***\n")
-file.write("偵測日期區間:" + str_prev_date + "~" + str_today + "\n")
+	print_dt = str(str_today) + (' ' * 22)
+	print("##############################################")
+	print("##            技術分析選股 TYPE 09          ##")
+	print("##                                          ##")
+	print("##                                          ##")
+	print("##  datetime: " + print_dt +               "##")
+	print("##############################################")
+	print("\n\n")
+	print("資料涵蓋範圍: " + str_prev_date + "~" + str_today + "\n")
 
-#建立資料庫連線
-conn = sqlite3.connect("market_price.sqlite")
+	# 寫入LOG File
+	dt=datetime.datetime.now()
+	str_date = parser.parse(str(dt)).strftime("%Y%m%d")
 
-strsql  = "select SEAR_COMP_ID,COMP_NAME, STOCK_TYPE from STOCK_COMP_LIST "
-#strsql += "where SEAR_COMP_ID='0050.TW' "
-strsql += "order by STOCK_TYPE, SEAR_COMP_ID "
+	name = "STOCK_SELECT_TYPE09_" + str_date + ".txt"
+	file = open(name, 'a', encoding = 'UTF-8')
+	tStart = time.time()#計時開始
+	file.write("\n\n\n*** LOG datetime  " + str(datetime.datetime.now()) + " ***\n")
+	file.write("Executing " + os.path.basename(__file__) + "...\n")
+	file.write("資料涵蓋範圍: " + str_prev_date + "~" + str_today + "\n")
 
-cursor = conn.execute(strsql)
-result = cursor.fetchall()
+	#建立資料庫連線
+	conn = sqlite3.connect("market_price.sqlite")
 
-df_result = pd.DataFrame()
-if len(result) > 0:
-	for stock in result:
-		#print(stock)
-		try:
-			df = Stock_Ana(stock, str_prev_date, str_today)
+	strsql  = "select SEAR_COMP_ID,COMP_NAME, STOCK_TYPE from STOCK_COMP_LIST "
+	#strsql += "where SEAR_COMP_ID='0050.TW' "
+	strsql += "order by STOCK_TYPE, SEAR_COMP_ID "
 
-			if len(df)>0:
-				df_result = pd.concat([df_result, df], ignore_index=True)
-		except Exception as e:
-			err_flag = True
-			print("Function Stock_Ana raise exception:\n" + str(e) + "\n")
+	cursor = conn.execute(strsql)
+	result = cursor.fetchall()
 
-#關閉cursor
-cursor.close()
+	df_result = pd.DataFrame()
+	if len(result) > 0:
+		for stock in result:
+			#print(stock)
+			try:
+				df = Stock_Ana(stock, str_prev_date, str_today)
 
-#關閉資料庫連線
-conn.close()
+				if len(df)>0:
+					df_result = pd.concat([df_result, df], ignore_index=True)
+			except Exception as e:
+				err_flag = True
+				print("Function Stock_Ana raise exception:\n" + str(e) + "\n")
 
-#資料進行排序
-if len(df_result)>0:
-	df_result = df_result.sort_values(by=['類別', 'var', 'burst_rt'], ascending=[True, True, False])
+	#關閉cursor
+	cursor.close()
 
-#結果寫入EXCEL檔
-file_name = 'STOCK_SELECT_TYPE09_' + str_date + '.xlsx'
-writer = pd.ExcelWriter(file_name, engine='xlsxwriter')
-df_result.to_excel(writer, sheet_name='stock', index=False)
-writer.save()
+	#關閉資料庫連線
+	conn.close()
 
-tEnd = time.time()#計時結束
-file.write ("\n\n\n結轉耗時 %f sec\n" % (tEnd - tStart)) #會自動做進位
-file.write("*** End LOG ***\n")
+	#資料進行排序
+	if len(df_result)>0:
+		df_result = df_result.sort_values(by=['類別', 'var', 'burst_rt'], ascending=[True, True, False])
 
-# Close File
-file.close()
+	#結果寫入EXCEL檔
+	file_name = 'STOCK_SELECT_TYPE09_' + str_date + '.xlsx'
+	writer = pd.ExcelWriter(file_name, engine='xlsxwriter')
+	df_result.to_excel(writer, sheet_name='stock', index=False)
+	writer.save()
 
-#若執行過程無錯誤，執行結束後刪除log檔案
-if err_flag == False:
-	os.remove(name)
+	tEnd = time.time()#計時結束
+	file.write ("\n\n\n結轉耗時 %f sec\n" % (tEnd - tStart)) #會自動做進位
+	file.write("*** End LOG ***\n")
 
-print("End of prog.")
+	# Close File
+	file.close()
+
+	#若執行過程無錯誤，執行結束後刪除log檔案
+	if err_flag == False:
+		os.remove(name)
+
+	print("\n\n技術分析選股TYPE 09執行結束...\n\n\n")
+
+if __name__ == '__main__':
+	MAIN_STOCK_SELECT_TYPE09()

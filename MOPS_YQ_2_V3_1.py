@@ -82,7 +82,6 @@ def mode_c():
 	MOPS_YQ_2(yyy, qq, "sii")
 	MOPS_YQ_2(yyy, qq, "otc")
 
-
 # 手動輸入條件結轉資料
 def mode_h():
 	yyyy = str(input("輸入抓取資料年分(YYYY):"))
@@ -98,8 +97,6 @@ def mode_h():
 	# 開始抓取資料
 	MOPS_YQ_2(yyy, qq, "sii")
 	MOPS_YQ_2(yyy, qq, "otc")
-
-
 
 # 跑特定區間，結轉資料(自行修改參數條件)
 def mode_a():
@@ -138,7 +135,7 @@ def proc_db(df, yyyy, qq):
 		bvps = str(df.iloc[i][2])
 		bvps = re.sub("[^-0-9^.]", "", bvps) # 數字做格式控制
 
-		print(comp_id + "  " + comp_name + "   " + bvps + "\n")
+		#print(comp_id + "  " + comp_name + "   " + bvps + "\n")
 		# 最後維護日期時間
 		str_date = str(datetime.datetime.now())
 		date_last_maint = parser.parse(str_date).strftime("%Y%m%d")
@@ -240,7 +237,7 @@ def MOPS_YQ_2(arg_yyy, arg_qq, arg_typek):
 			print ("Page is ready!")
 			break
 
-		except TimeoutException:
+		except TimeoutException as e:
 			cnt += 1
 			print ("Load cnt=" + str(cnt))
 			if cnt >= 3:
@@ -250,8 +247,11 @@ def MOPS_YQ_2(arg_yyy, arg_qq, arg_typek):
 				driver.quit();
 
 				# 讀取時間太久，直接結束程式
-				print("Err: 網頁讀取異常或該網頁無資料.\n")
-				file.write("Err: 網頁讀取逾時或該網頁無資料.\n")
+				print("Err: 異常中止，網頁讀取異常或該網頁無資料.")
+				print(e.message)
+				print(e.args)
+				file.write("Err: 異常中止，網頁讀取逾時或該網頁無資料.\n")
+				file.write(e.message + "\n" + e.args + "\n\n")
 				return
 
 	if err_flag == False:
@@ -305,7 +305,7 @@ def MOPS_YQ_2(arg_yyy, arg_qq, arg_typek):
 		print ("擷取資料完畢 ...")
 		file.write("擷取資料完畢 ...\n")
 
-def MAIN_MOPS_YQ_2():
+def MAIN_MOPS_YQ_2(arg_mode='C'):
 	global err_flag
 	global file
 	global conn
@@ -318,7 +318,8 @@ def MAIN_MOPS_YQ_2():
 	conn = sqlite3.connect('market_price.sqlite')
 
 	try:
-		run_mode = sys.argv[1]
+		#run_mode = sys.argv[1]
+		run_mode = arg_mode
 		run_mode = run_mode.upper()
 	except Exception as e:
 		run_mode = "C"
