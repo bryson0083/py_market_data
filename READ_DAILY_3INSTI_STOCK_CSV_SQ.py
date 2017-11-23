@@ -87,11 +87,12 @@ def READ_CSV(arg_date):
 			idx += 1
 
 	except Exception as e:
+		err_flag = True
 		print("$$$ Err:" + arg_date + " 三大法人個股買賣超CSV資料讀取異常. $$$\n")
 		print(e)
 		file.write("$$$ Err:" + arg_date + " 三大法人個股買賣超CSV資料讀取異常. $$$\n")
 		file.write(e)
-		err_flag = True
+		return
 	
 	#all_data list拋到pandas
 	df = pd.DataFrame(all_data[1:], columns = all_data[0])
@@ -100,18 +101,16 @@ def READ_CSV(arg_date):
 
 	#寫入、更新資料庫
 	STORE_DB(df2, arg_date)
+	return
 
 def STORE_DB(arg_df, arg_date):
 	global err_flag
 	global file
+	global conn
 
 	#print(arg_df)
 	quo_date = arg_date
-	
-	#建立資料庫連線
-	conn = sqlite3.connect("market_price.sqlite")
-	
-	commit_flag = True
+
 	for i in range(0,len(arg_df)):
 		#print(str(df.index[i]))
 		comp_id = str(arg_df.loc[i]['代號'])
@@ -162,7 +161,6 @@ def STORE_DB(arg_df, arg_date):
 				#print(strsql)
 				conn.execute(strsql)
 			except sqlite3.Error as er:
-				commit_flag = False
 				err_flag = True
 				print("insert STOCK_CHIP_ANA er=" + er.args[0] + "\n")
 				print(comp_id + " " + comp_name + " " + quo_date + "資料異常.\n")
@@ -175,7 +173,7 @@ def STORE_DB(arg_df, arg_date):
 		cursor.close()
 
 	# 最後commit
-	if commit_flag == True:
+	if err_flag == False:
 		conn.commit()
 		print(quo_date + "上櫃三大法人個股買賣超日報，寫入成功.\n")
 		file.write(quo_date + "上櫃三大法人個股買賣超日報，寫入成功.\n")
@@ -183,13 +181,13 @@ def STORE_DB(arg_df, arg_date):
 		conn.execute("rollback")
 		print(quo_date + "上櫃三大法人個股買賣超日報，寫入失敗Rollback.\n")
 		file.write(quo_date + "上櫃三大法人個股買賣超日報，寫入失敗Rollback.\n")
-	
-	#關閉資料庫連線
-	conn.close
+
+	return
 
 def MAIN_READ_DAILY_3INSTI_STOCK_CSV_SQ():
 	global err_flag
 	global file
+	global conn
 	err_flag = False
 
 	print("Executing " + os.path.basename(__file__) + "...")
@@ -233,6 +231,9 @@ def MAIN_READ_DAILY_3INSTI_STOCK_CSV_SQ():
 	int_diff_date = delta.days + 1
 	#print("days=" + str(int_diff_date) + "\n")
 
+	#建立資料庫連線
+	conn = sqlite3.connect("market_price.sqlite")
+
 	i = 1
 	dt = ""
 	while i <= int_diff_date:
@@ -254,6 +255,9 @@ def MAIN_READ_DAILY_3INSTI_STOCK_CSV_SQ():
 	tEnd = time.time()#計時結束
 	file.write ("\n\n\n結轉耗時 %f sec\n" % (tEnd - tStart)) #會自動做進位
 	file.write("*** End LOG ***\n")
+
+	#關閉資料庫連線
+	conn.close
 
 	# Close File
 	file.close()

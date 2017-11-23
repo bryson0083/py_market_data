@@ -21,7 +21,7 @@ from dateutil.parser import parse
 from dateutil import parser
 from subprocess import Popen
 
-#以下為非公用程式import
+########### 以下為非公用程式import ##################################
 import GET_DAILY_MTSS as get_mtss
 import READ_DAILY_MTSS_CSV as rd_mtss
 import GET_DAILY_MTSS_SQ as get_mtss_sq
@@ -44,11 +44,11 @@ import SQUOTE_CSV_V1_1 as rd_sqo
 import QUO_MONTH_V1_1 as quo_m
 import QUO_WEEK_V1_1 as quo_w
 
-import GET_DAILY_3INSTI_STOCK_V1_1 as get_3insti
-import READ_DAILY_3INSTI_STOCK_CSV as rd_3insti
-import GET_DAILY_3INSTI_STOCK_SQ as get_3insti_sq
-import READ_DAILY_3INSTI_STOCK_CSV_SQ as rd_3insti_sq
-import DAILY_MAIL as mail
+#import GET_DAILY_3INSTI_STOCK_V1_1 as get_3insti
+#import READ_DAILY_3INSTI_STOCK_CSV as rd_3insti
+#import GET_DAILY_3INSTI_STOCK_SQ as get_3insti_sq
+#import READ_DAILY_3INSTI_STOCK_CSV_SQ as rd_3insti_sq
+#import DAILY_MAIL as mail
 
 def job():
 	str_date = str(datetime.datetime.now())
@@ -84,15 +84,19 @@ def job3():
 def job4():
 	str_date = str(datetime.datetime.now())
 	print("執行job 4: 目前時間:" + str_date + "\n")
-	get_3insti.MAIN_GET_DAILY_3INSTI_STOCK()
-	rd_3insti.MAIN_READ_DAILY_3INSTI_STOCK_CSV()
-	get_3insti_sq.MAIN_GET_DAILY_3INSTI_STOCK_SQ()
-	rd_3insti_sq.MAIN_READ_DAILY_3INSTI_STOCK_CSV_SQ()
+
+	#get_3insti_sq.MAIN_GET_DAILY_3INSTI_STOCK_SQ()
+	#rd_3insti_sq.MAIN_READ_DAILY_3INSTI_STOCK_CSV_SQ()
+	#time.sleep(10)
+
+	#get_3insti.MAIN_GET_DAILY_3INSTI_STOCK()
+	#rd_3insti.MAIN_READ_DAILY_3INSTI_STOCK_CSV()
+	#time.sleep(30)
 
 	p = Popen("STOCK_SELECT.bat")
 	stdout, stderr = p.communicate()
 
-	mail.MAIN_DAILY_MAIL()
+	#mail.MAIN_DAILY_MAIL()
 
 if __name__ == '__main__':
 	#取得目前時間
@@ -102,7 +106,7 @@ if __name__ == '__main__':
 
 	#手動測試單獨執行用
 	#ss05.MAIN_STOCK_SELECT_TYPE05()
-	#job4()
+	#job()
 
 	#上市櫃信用交易統計、融資融券彙總，資料抓取
 	#上市櫃外資及陸資投資持股統計，資料抓取
@@ -125,7 +129,7 @@ if __name__ == '__main__':
 	#CPS、CRM舊LOG檔案刪除(每個月的第3日執行)
 	#if str_day == "3":
 	#	schedule.every().day.at("09:10").do(job4)
-	
+
 	while True:
-	    schedule.run_pending()
-	    time.sleep(1)
+		schedule.run_pending()
+		time.sleep(1)

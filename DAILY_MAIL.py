@@ -49,7 +49,6 @@ def MAIN_DAILY_MAIL():
 	#附件清單
 	file_list  = ['STOCK_CHIP_ANA_' + str_date + '.xlsx', 'STOCK_SELECT_TYPE09_' + str_date + '.xlsx', 'STOCK_SELECT_TYPE10_' + str_date + '.xlsx']
 	file_list2 = ['STOCK_CHIP_ANA_' + str_date + '.xlsx', 'STOCK_SELECT_TYPE09_' + str_date + '.xlsx', 'STOCK_SELECT_TYPE10_' + str_date + '.xlsx', 'STOCK_SELECT_TYPE11_' + str_date + '.xlsx', 'STOCK_SELECT_TYPE12_' + str_date + '.xlsx']
-	file_list3 = ['STOCK_CHIP_ANA_' + str_date + '.xlsx', 'STOCK_SELECT_TYPE05_' + str_date + '.xlsx', 'STOCK_SELECT_TYPE06_' + str_date + '.xlsx', 'STOCK_SELECT_TYPE09_' + str_date + '.xlsx', 'STOCK_SELECT_TYPE10_' + str_date + '.xlsx', 'STOCK_SELECT_TYPE11_' + str_date + '.xlsx', 'STOCK_SELECT_TYPE12_' + str_date + '.xlsx']
 
 	#發送郵件程序
 	m = GMail.Mailer()
@@ -79,7 +78,7 @@ def MAIN_DAILY_MAIL():
 		m.send_email()
 
 		print('@@@ 郵件清單2發送:')
-		m.recipients = ['tenya.shiue@gmail.com']	
+		m.recipients = ['tenya.shiue@gmail.com', 'bryson0083@gmail.com']	
 		m.subject = '每日程式選股清單' + str_date
 		m.message = '你好:\n以下為本日程式選股清單，詳見附件檔案.\n\n\n'
 		m.message +='檔案說明\n'
@@ -103,12 +102,12 @@ def MAIN_DAILY_MAIL():
 		m.attachments = file_list2
 		m.send_email()
 
-		print('@@@ 郵件清單3發送:')
-		m.recipients = ['bryson0083@gmail.com']
-		m.subject = '每日程式選股清單' + str_date
-		m.message = '你好:\n以下為本日程式選股清單，詳見附件檔案.\n\n\n'
-		m.attachments = file_list3
-		m.send_email()
+		#print('@@@ 郵件清單3發送:')
+		#m.recipients = ['bryson0083@gmail.com']
+		#m.subject = '每日程式選股清單' + str_date
+		#m.message = '你好:\n以下為本日程式選股清單，詳見附件檔案.\n\n\n'
+		#m.attachments = file_list3
+		#m.send_email()
 
 	except Exception as e:
 		err_flag = True
