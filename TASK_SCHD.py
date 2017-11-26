@@ -4,7 +4,7 @@
 
 @author: Bryson Xue
 
-@Note: 
+@Note:
 	所有需要執行之排程程序，集中管理執行
 
 @Ref:
@@ -87,6 +87,8 @@ def job4():
 	global task_mode
 
 	str_date = str(datetime.datetime.now())
+	arg_date = parser.parse(str(str_date)).strftime("%Y%m%d")
+
 	print("執行job 4: 目前時間:" + str_date + "\n")
 	mv_file.MAIN_MV_FILE() 	#之前分析結果的excel檔，移至歷史檔案資料夾存放
 
@@ -96,7 +98,7 @@ def job4():
 	p = Popen("py_batch_chip_ana_data_storedb.bat")
 	stdout, stderr = p.communicate()
 
-	ck = ck_open.MAIN_CK_OPEN() #檢查當天是否有開市
+	ck = ck_open.MAIN_CK_OPEN(arg_date) #檢查當天是否有開市
 	if ck == True:
 		p = Popen("STOCK_SELECT.bat")
 		stdout, stderr = p.communicate()
@@ -120,10 +122,6 @@ if __name__ == '__main__':
 	str_day = str(dt.day)	#取得當天日期，日的部分
 	#print(str_day)
 
-	#當天是禮拜幾(monday=1 ~ sunday=7)
-	dt_wday = datetime.datetime.today().isoweekday()
-	#print(dt_wday)
-
 	#依據所選模式，決定執行時間
 	try:
 		task_mode = sys.argv[1]
@@ -135,7 +133,7 @@ if __name__ == '__main__':
 
 	#手動測試單獨執行用
 	#ss05.MAIN_STOCK_SELECT_TYPE05()
-	#job()
+	#job4()
 
 	#上市櫃信用交易統計、融資融券彙總，資料抓取
 	#上市櫃外資及陸資投資持股統計，資料抓取
@@ -159,8 +157,8 @@ if __name__ == '__main__':
 	schedule.every().day.at("16:15").do(job4)
 
 	#上市櫃，集保中心~集保戶股權分散表查詢，資料抓取(當周資料要周六後才會有)
-	if (dt_wday == 6) or (dt_wday == 7):
-		schedule.every().day.at("17:00").do(job5)
+	schedule.every().saturday.at("17:00").do(job5)
+	schedule.every().sunday.at("17:00").do(job5)
 
 	while True:
 		schedule.run_pending()

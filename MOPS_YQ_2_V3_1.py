@@ -4,12 +4,12 @@
 
 @author: Bryson Xue
 
-@target_rul: 
+@target_rul:
 	讀取公開觀測資訊站
 	=> 財務報表 => 採IFRSs後 => 合併/個別報表 => 合併/個別報表 => 資產負債表
 	http://mops.twse.com.tw/mops/web/t163sb05
 
-@Note: 
+@Note:
 	市場別:sii(上市)、otc(上櫃)
 	@chcp 65001
 
@@ -21,7 +21,7 @@ import datetime
 
 import os.path
 import time
-import re 
+import re
 import pandas as pd
 
 from selenium import webdriver
@@ -37,7 +37,7 @@ from dateutil.parser import parse
 def mode_c():
 	#str_date = "2016-04-05"
 	str_date = str(datetime.datetime.now())
-	
+
 	# 轉換日期為C8格式字串
 	dt_c8 = parser.parse(str_date).strftime("%Y%m%d")
 	yyyy = dt_c8[0:4]
@@ -183,7 +183,7 @@ def proc_db(df, yyyy, qq):
 			file.write(sqlstr + "\n")
 			file.write("DB Err:\n" + er.args[0] + "\n")
 			print (sqlstr + "\n")
-			print ("DB Err:\n" + er.args[0] + "\n")		
+			print ("DB Err:\n" + er.args[0] + "\n")
 
 		# 關閉DB cursor
 		cursor.close()
@@ -378,4 +378,10 @@ def MAIN_MOPS_YQ_2(arg_mode='C'):
 	print("公開觀測資訊站~資產負債表資料抓取作業結束...\n\n\n")
 
 if __name__ == '__main__':
-	MAIN_MOPS_YQ_2()	
+	try:
+		run_mode = sys.argv[1]
+		run_mode = run_mode.upper()
+	except Exception as e:
+		run_mode = "C"
+
+	MAIN_MOPS_YQ_2(run_mode)

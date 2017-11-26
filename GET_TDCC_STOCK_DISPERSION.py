@@ -4,10 +4,10 @@
 
 @author: Bryson Xue
 
-@target_rul: 
+@target_rul:
 	查詢網頁 => http://www.tdcc.com.tw/smWeb/QryStock.jsp
 
-@Note: 
+@Note:
 	集保中心~集保戶股權分散表查詢
 	每日資料結轉寫入資料庫
 	抓取目標為上市、上櫃股票
@@ -40,8 +40,8 @@ def GET_DATA(arg_stock, arg_date):
 
 		if rt_flag == False:
 			err_flag = True
-			print(str(arg_stock) + " 日期" + str_date + "資料抓取失敗.")
-			file.write(str(arg_stock) + " 日期" + str_date + "資料抓取失敗.")
+			print(str(arg_stock) + " 日期" + arg_date + "資料抓取失敗.")
+			file.write(str(arg_stock) + " 日期" + arg_date + "資料抓取失敗.")
 
 		DO_WAIT()	# 避免過度讀取網站，隨機間隔時間再讀取網頁
 
@@ -147,7 +147,7 @@ def GET_WEB_DATA(arg_stock, arg_date):
 	for tr in tb.select('tr'):
 		rdata = [td.text.replace("\u3000","").replace(",","").strip() for td in tr.select('td')]
 		all_data.append(rdata)
-	
+
 	ls_head = ['SEQ', 'LV_DESC', 'NUM_OF_PEOPLE', 'STOCK_SHARES', 'PER_CENT_RT']
 	df = pd.DataFrame(all_data[1:len(all_data)-1], columns=ls_head)	#最後一筆合計資料不要
 	#df = pd.DataFrame(all_data[1:], columns=ls_head)	#最後一筆合計資料不要
@@ -317,4 +317,4 @@ def MAIN_GET_TDCC_STOCK_DISPERSION(arg_mode='A'):
 	print("\n\n集保中心~集保戶股權分散表查詢，資料抓取結束...\n\n\n")
 
 if __name__ == '__main__':
-	MAIN_GET_TDCC_STOCK_DISPERSION()	
+	MAIN_GET_TDCC_STOCK_DISPERSION()

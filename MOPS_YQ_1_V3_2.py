@@ -4,10 +4,10 @@
 
 @author: Bryson Xue
 
-@target_rul: 
+@target_rul:
 	http://mops.twse.com.tw/mops/web/t163sb04
 
-@Note: 
+@Note:
 	市場別:sii(上市)、otc(上櫃)
 	@chcp 65001
 
@@ -102,7 +102,7 @@ def mode_h():
 	# 抓取資料(上市)
 	print("抓取上市公司資料...")
 	MOPS_YQ_1(yyy, qq, 'sii')
-	
+
 	# 隨機等待60~180秒的時間
 	random_sec = randint(60,180)
 	print("Waiting sec=" + str(random_sec) + "\n")
@@ -275,13 +275,13 @@ def MOPS_YQ_1(yyy, qq, mkt_tp):
 					for row in table[i].select('tr')]
 			data = data[1:]
 			#print(data)
-			
+
 			df = pd.DataFrame(data=data, columns = head[0])
 			df = df.loc[:,['公司代號', '公司名稱', '基本每股盈餘（元）']]
 			#print(df)
 			all_df = pd.concat([all_df,df],ignore_index=True)
 			i += 1
-		
+
 		# 資料庫存取
 		proc_db(all_df, yyyy, qq)
 
@@ -359,4 +359,10 @@ def MAIN_MOPS_YQ_1(arg_mode='C'):
 	print("公開觀測資訊站~綜合損益表資料抓取作業結束...\n\n\n")
 
 if __name__ == '__main__':
-	MAIN_MOPS_YQ_1()	
+	try:
+		run_mode = sys.argv[1]
+		run_mode = run_mode.upper()
+	except Exception as e:
+		run_mode = "C"
+
+	MAIN_MOPS_YQ_1(run_mode)

@@ -4,11 +4,11 @@
 
 @author: Bryson Xue
 
-@Note: 
+@Note:
 	透過郵件發送每日程式選股結果
 
 @Ref:
-	
+
 """
 import os
 import json
@@ -57,7 +57,7 @@ def MAIN_DAILY_MAIL():
 
 	try:
 		print('@@@ 郵件清單1發送:')
-		m.recipients = ['alvan16888@gmail.com', 'yu62493@gmail.com']	
+		m.recipients = ['alvan16888@gmail.com', 'yu62493@gmail.com']
 		m.subject = '每日程式選股清單' + str_date
 		m.message = '你好:\n以下為本日程式選股清單，詳見附件檔案.\n\n\n'
 		m.message +='檔案說明\n'
@@ -78,7 +78,7 @@ def MAIN_DAILY_MAIL():
 		m.send_email()
 
 		print('@@@ 郵件清單2發送:')
-		m.recipients = ['tenya.shiue@gmail.com', 'bryson0083@gmail.com']	
+		m.recipients = ['tenya.shiue@gmail.com', 'bryson0083@gmail.com']
 		m.subject = '每日程式選股清單' + str_date
 		m.message = '你好:\n以下為本日程式選股清單，詳見附件檔案.\n\n\n'
 		m.message +='檔案說明\n'
@@ -128,4 +128,4 @@ def MAIN_DAILY_MAIL():
 	print("\n\n每日選股結果郵件發送，執行結束...\n\n\n")
 
 if __name__ == '__main__':
-	MAIN_DAILY_MAIL()	
+	MAIN_DAILY_MAIL()
