@@ -211,12 +211,12 @@ def STORE_DB(arg_df, arg_date):
 	# 最後commit
 	if commit_flag == True:
 		conn.commit()
-		print(quo_date + "櫃買中心上櫃股票融資融券餘額，寫入成功.\n")
-		file.write(quo_date + "櫃買中心上櫃股票融資融券餘額，寫入成功.\n")
+		print(quo_date + "櫃買中心上櫃股票融資融券餘額，寫入/更新成功.\n")
+		file.write(quo_date + "櫃買中心上櫃股票融資融券餘額，寫入/更新成功.\n")
 	else:
 		conn.execute("rollback")
-		print(quo_date + "櫃買中心上櫃股票融資融券餘額，寫入失敗Rollback.\n")
-		file.write(quo_date + "櫃買中心上櫃股票融資融券餘額，寫入失敗Rollback.\n")
+		print(quo_date + "櫃買中心上櫃股票融資融券餘額，寫入/更新失敗Rollback.\n")
+		file.write(quo_date + "櫃買中心上櫃股票融資融券餘額，寫入/更新失敗Rollback.\n")
 	
 	#關閉資料庫連線
 	conn.close
@@ -235,8 +235,8 @@ def MAIN_READ_DAILY_MTSS_CSV_SQ():
 	end_date = parser.parse(str(dt)).strftime("%Y%m%d")
 
 	#for需要時手動設定日期區間用
-	#start_date = "20170101"
-	#end_date = "20170614"
+	#start_date = "20171101"
+	#end_date = "20171127"
 
 	# 寫入LOG File
 	str_date = str(datetime.datetime.now())

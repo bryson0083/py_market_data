@@ -173,19 +173,38 @@ def STORE_DB(arg_df, arg_date):
 			strsql += "'" + time_last_maint + "',"
 			strsql += "'" + prog_last_maint + "' "
 			strsql += ")"
-			
-			try:
-				#print(strsql)
-				conn.execute(strsql)
-			except sqlite3.Error as er:
-				commit_flag = False
-				err_flag = True
-				print("insert STOCK_FR_HOLDING_SHARES er=" + er.args[0])
-				print(comp_id + " " + comp_name + " " + quo_date + "資料異常.")
-				print(strsql + "\n")
-				file.write("insert STOCK_FR_HOLDING_SHARES er=" + er.args[0] + "\n")
-				file.write(comp_id + " " + comp_name + " " + quo_date + "資料異常.\n")
-				file.write(strsql + "\n")
+
+		else:
+			#print(comp_id + "有資料\n")
+			#針對現有資料更新
+			strsql  = "update STOCK_FR_HOLDING_SHARES set "
+			strsql += "ISSUED_SHARES=" + str(issued_shares) + ","
+			strsql += "FR_INV_BLS=" + str(fr_inv_bls) + ","
+			strsql += "FR_HOLDING_SHARES=" + str(fr_holding_shares) + ","
+			strsql += "FR_INV_BLS_RT=" + str(fr_inv_bls_rt) + ","
+			strsql += "FR_HOLDING_RT=" + str(fr_holding_rt) + ","
+			strsql += "FR_INV_UPLIMIT=" + str(fr_inv_uplimit) + ","
+			strsql += "CN_INV_UPLIMIT=" + str(cn_inv_uplimit) + ","
+			strsql += "LAST_CLAIM_DATE='" + str(last_claim_date) + "',"
+			strsql += "DATE_LAST_MAINT='" + date_last_maint + "',"
+			strsql += "TIME_LAST_MAINT='" + time_last_maint + "',"
+			strsql += "PROG_LAST_MAINT='" + prog_last_maint + "' "
+			strsql += "where "
+			strsql += "QUO_DATE = '" + quo_date + "' and "
+			strsql += "SEAR_COMP_ID='" + comp_id + "' "
+
+		try:
+			#print(strsql)
+			conn.execute(strsql)
+		except sqlite3.Error as er:
+			commit_flag = False
+			err_flag = True
+			print("insert/update STOCK_FR_HOLDING_SHARES er=" + er.args[0])
+			print(comp_id + " " + comp_name + " " + quo_date + "資料異常.")
+			print(strsql + "\n")
+			file.write("insert/update STOCK_FR_HOLDING_SHARES er=" + er.args[0] + "\n")
+			file.write(comp_id + " " + comp_name + " " + quo_date + "資料異常.\n")
+			file.write(strsql + "\n")
 
 		#關閉cursor
 		cursor.close()
@@ -193,12 +212,12 @@ def STORE_DB(arg_df, arg_date):
 	# 最後commit
 	if commit_flag == True:
 		conn.commit()
-		print(quo_date + " 證交所外資及陸資投資持股統計，寫入成功.\n")
-		file.write(quo_date + " 證交所外資及陸資投資持股統計，寫入成功.\n")
+		print(quo_date + " 證交所外資及陸資投資持股統計，寫入/更新成功.\n")
+		file.write(quo_date + " 證交所外資及陸資投資持股統計，寫入/更新成功.\n")
 	else:
 		conn.execute("rollback")
-		print(quo_date + "證交所外資及陸資投資持股統計，寫入失敗Rollback.\n")
-		file.write(quo_date + "證交所外資及陸資投資持股統計，寫入失敗Rollback.\n")
+		print(quo_date + "證交所外資及陸資投資持股統計，寫入/更新失敗Rollback.\n")
+		file.write(quo_date + "證交所外資及陸資投資持股統計，寫入/更新失敗Rollback.\n")
 	
 	#關閉資料庫連線
 	conn.close
@@ -217,8 +236,8 @@ def MAIN_READ_DAILY_FR_HOLDING_SHARES_CSV():
 	end_date = parser.parse(str(dt)).strftime("%Y%m%d")
 
 	#for需要時手動設定日期區間用
-	#start_date = "20170101"
-	#end_date = "20170619"
+	#start_date = "20171101"
+	#end_date = "20171127"
 
 	# 寫入LOG File
 	str_date = str(datetime.datetime.now())

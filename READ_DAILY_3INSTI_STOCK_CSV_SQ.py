@@ -157,17 +157,31 @@ def STORE_DB(arg_df, arg_date):
 			strsql += "'" + prog_last_maint + "' "
 			strsql += ")"
 
-			try:
-				#print(strsql)
-				conn.execute(strsql)
-			except sqlite3.Error as er:
-				err_flag = True
-				print("insert STOCK_CHIP_ANA er=" + er.args[0] + "\n")
-				print(comp_id + " " + comp_name + " " + quo_date + "資料異常.\n")
-				print(strsql + "\n")
-				file.write("insert STOCK_CHIP_ANA er=" + er.args[0] + "\n")
-				file.write(comp_id + " " + comp_name + " " + quo_date + "資料異常.\n")
-				file.write(strsql + "\n")
+		else:
+			#print(comp_id + "有資料\n")
+			#針對現有資料更新
+			strsql  = "update STOCK_CHIP_ANA set "
+			strsql += "FOREIGN_INV_NET_BAS=" + str(fr_net_bas) + ","
+			strsql += "INV_TRUST_NET_BAS=" + str(it_net_bas) + ","
+			strsql += "DEALER_NET_BAS=" + str(dl_net_bas) + ","
+			strsql += "DATE_LAST_MAINT='" + date_last_maint + "',"
+			strsql += "TIME_LAST_MAINT='" + time_last_maint + "',"
+			strsql += "PROG_LAST_MAINT='" + prog_last_maint + "' "
+			strsql += "where "
+			strsql += "QUO_DATE = '" + quo_date + "' and "
+			strsql += "SEAR_COMP_ID='" + comp_id + "' "
+
+		try:
+			#print(strsql)
+			conn.execute(strsql)
+		except sqlite3.Error as er:
+			err_flag = True
+			print("insert/update STOCK_CHIP_ANA er=" + er.args[0] + "\n")
+			print(comp_id + " " + comp_name + " " + quo_date + "資料異常.\n")
+			print(strsql + "\n")
+			file.write("insert/update STOCK_CHIP_ANA er=" + er.args[0] + "\n")
+			file.write(comp_id + " " + comp_name + " " + quo_date + "資料異常.\n")
+			file.write(strsql + "\n")
 
 		#關閉cursor
 		cursor.close()
@@ -175,12 +189,12 @@ def STORE_DB(arg_df, arg_date):
 	# 最後commit
 	if err_flag == False:
 		conn.commit()
-		print(quo_date + "上櫃三大法人個股買賣超日報，寫入成功.\n")
-		file.write(quo_date + "上櫃三大法人個股買賣超日報，寫入成功.\n")
+		print(quo_date + "上櫃三大法人個股買賣超日報，寫入/更新成功.\n")
+		file.write(quo_date + "上櫃三大法人個股買賣超日報，寫入/更新成功.\n")
 	else:
 		conn.execute("rollback")
-		print(quo_date + "上櫃三大法人個股買賣超日報，寫入失敗Rollback.\n")
-		file.write(quo_date + "上櫃三大法人個股買賣超日報，寫入失敗Rollback.\n")
+		print(quo_date + "上櫃三大法人個股買賣超日報，寫入/更新失敗Rollback.\n")
+		file.write(quo_date + "上櫃三大法人個股買賣超日報，寫入/更新失敗Rollback.\n")
 
 	return
 
@@ -199,8 +213,8 @@ def MAIN_READ_DAILY_3INSTI_STOCK_CSV_SQ():
 	end_date = parser.parse(str(dt)).strftime("%Y%m%d")
 
 	#for需要時手動設定日期區間用
-	#start_date = "20170101"
-	#end_date = "20170609"
+	#start_date = "20171101"
+	#end_date = "20171127"
 
 	# 寫入LOG File
 	str_date = str(datetime.datetime.now())

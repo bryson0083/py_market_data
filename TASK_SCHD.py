@@ -103,8 +103,11 @@ def job4():
 		p = Popen("STOCK_SELECT.bat")
 		stdout, stderr = p.communicate()
 
-		#發送郵件(固定家裡那台發)
+		#發送郵件、選股結果上傳(固定家裡那台做)
 		if task_mode == 'A':
+			p = Popen("STOCK_SELECT_FB.bat")
+			stdout, stderr = p.communicate()
+			
 			dmail.MAIN_DAILY_MAIL()
 
 def job5():
@@ -133,8 +136,8 @@ if __name__ == '__main__':
 
 	#手動測試單獨執行用
 	#ss05.MAIN_STOCK_SELECT_TYPE05()
-	#job4()
-
+	#job()
+	
 	#上市櫃信用交易統計、融資融券彙總，資料抓取
 	#上市櫃外資及陸資投資持股統計，資料抓取
 	if task_mode == "B":
@@ -163,3 +166,4 @@ if __name__ == '__main__':
 	while True:
 		schedule.run_pending()
 		time.sleep(1)
+	
