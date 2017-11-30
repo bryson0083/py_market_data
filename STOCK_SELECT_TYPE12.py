@@ -159,20 +159,18 @@ def MAIN_STOCK_SELECT_TYPE12():
 	#關閉資料庫連線
 	conn.close()
 
-	no_data_flag = False
 	#資料進行排序
 	if len(df_result)>0:
 		df_result = df_result.sort_values(by=['SLOWK', 'SLOWD', '代號'], ascending=[True, True, True])
 	else:
-		print('無符合條件之股票.')
-		no_data_flag = True
+		df_result = pd.DataFrame([], columns=['今日無符合條件之股票.'])
+		print('今日無符合條件之股票.')
 
-	if no_data_flag == False:
-		#結果寫入EXCEL檔
-		file_name = 'STOCK_SELECT_TYPE12_' + str_date + '.xlsx'
-		writer = pd.ExcelWriter(file_name, engine='xlsxwriter')
-		df_result.to_excel(writer, sheet_name='stock', index=False)
-		writer.save()
+	#結果寫入EXCEL檔
+	file_name = 'STOCK_SELECT_TYPE12_' + str_date + '.xlsx'
+	writer = pd.ExcelWriter(file_name, engine='xlsxwriter')
+	df_result.to_excel(writer, sheet_name='stock', index=False)
+	writer.save()
 
 	tEnd = time.time()#計時結束
 	file.write ("\n\n\n結轉耗時 %f sec\n" % (tEnd - tStart)) #會自動做進位

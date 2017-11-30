@@ -229,6 +229,9 @@ def MAIN_STOCK_SELECT_TYPE10():
 	#資料進行排序
 	if len(df_result)>0:
 		df_result = df_result.sort_values(by=['類別', 'var', 'burst_rt'], ascending=[True, True, False])
+	else:
+		df_result = pd.DataFrame([], columns=['今日無符合條件之股票.'])
+		print('今日無符合條件之股票.')
 
 	#結果寫入EXCEL檔
 	file_name = 'STOCK_SELECT_TYPE10_' + str_date + '.xlsx'

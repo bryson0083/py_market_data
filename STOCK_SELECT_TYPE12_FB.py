@@ -34,14 +34,20 @@ def MAIN_STOCK_SELECT_TYPE12_FB():
 	sh = wb.sheet_by_index(0)
 	row_cnt = sh.nrows
 
+	na_flag = False
+	#print(sh.cell(0,0).value)
+	if sh.cell(0,0).value == '今日無符合條件之股票.':
+		na_flag = True
+
 	row_ls = []
-	for i in range(1,row_cnt):
-		d = {}
-		#print(i)
-		d['股票代號'] = sh.cell(i,0).value.replace('.TW','')
-		d['名稱'] = sh.cell(i,1).value
-		#print(d)
-		row_ls.append(d)
+	if na_flag == False:
+		for i in range(1,row_cnt):
+			d = {}
+			#print(i)
+			d['股票代號'] = sh.cell(i,0).value.replace('.TW','')
+			d['名稱'] = sh.cell(i,1).value
+			#print(d)
+			row_ls.append(d)
 
 	#關閉excel檔案
 	wb.release_resources()
@@ -57,17 +63,21 @@ def MAIN_STOCK_SELECT_TYPE12_FB():
 		#轉存firebase前，清空線上的資料
 		fdb.delete('/STOCK_S12', None)
 
-		#資料轉存firebase
-		for row in row_ls:
-			fdb.post('/STOCK_S12', row)
+		if na_flag == False:
+			#資料轉存firebase
+			for row in row_ls:
+				fdb.post('/STOCK_S12', row)
 
-		print('上傳STOCK_S12成功.')
+			print('上傳STOCK_S12成功.')
+		else:
+			print('今日無符合條件之股票，不做資料上傳.')
+
 	except Exception as e:
 		print('Err: 資料上傳Firebase table => STOCK_S12異常.')
 		print(e.args)
 		return
 
-	print("End of prog.")
+	print("End of prog.\n\n")
 
 if __name__ == '__main__':
 	MAIN_STOCK_SELECT_TYPE12_FB()

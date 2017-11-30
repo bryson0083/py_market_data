@@ -18,6 +18,15 @@ import datetime
 from datetime import date
 from dateutil import parser
 
+def FILE_IS_EXIST(arg_file_name):
+	#判斷EXCEL檔案是否存在，若無檔案，則不發該附件檔案
+	is_existed = os.path.exists(arg_file_name)
+	if is_existed == False:
+		print(arg_file_name + " 無此檔.\n")
+		return False
+	else:
+		return True
+
 def MAIN_DAILY_MAIL():
 	global err_flag
 	global file
@@ -26,6 +35,7 @@ def MAIN_DAILY_MAIL():
 	# 寫入LOG File
 	dt=datetime.datetime.now()
 	str_date = parser.parse(str(dt)).strftime("%Y%m%d")
+	#str_date = '20171130'
 
 	print_dt = str(str_date) + (' ' * 22)
 	print("##############################################")
@@ -47,8 +57,27 @@ def MAIN_DAILY_MAIL():
 		data = json.load(data_file)
 
 	#附件清單
-	file_list  = ['STOCK_CHIP_ANA_' + str_date + '.xlsx', 'STOCK_SELECT_TYPE09_' + str_date + '.xlsx', 'STOCK_SELECT_TYPE10_' + str_date + '.xlsx']
-	file_list2 = ['STOCK_CHIP_ANA_' + str_date + '.xlsx', 'STOCK_SELECT_TYPE09_' + str_date + '.xlsx', 'STOCK_SELECT_TYPE10_' + str_date + '.xlsx', 'STOCK_SELECT_TYPE11_' + str_date + '.xlsx', 'STOCK_SELECT_TYPE12_' + str_date + '.xlsx']
+	#file_list  = ['STOCK_CHIP_ANA_' + str_date + '.xlsx', 'STOCK_SELECT_TYPE09_' + str_date + '.xlsx', 'STOCK_SELECT_TYPE10_' + str_date + '.xlsx']
+	#file_list2 = ['STOCK_CHIP_ANA_' + str_date + '.xlsx', 'STOCK_SELECT_TYPE09_' + str_date + '.xlsx', 'STOCK_SELECT_TYPE10_' + str_date + '.xlsx', 'STOCK_SELECT_TYPE11_' + str_date + '.xlsx', 'STOCK_SELECT_TYPE12_' + str_date + '.xlsx']
+	file_list = []
+	file_list2 = []
+	if FILE_IS_EXIST('STOCK_CHIP_ANA_' + str_date + '.xlsx'):
+		file_list.append('STOCK_CHIP_ANA_' + str_date + '.xlsx')
+		file_list2.append('STOCK_CHIP_ANA_' + str_date + '.xlsx')
+
+	if FILE_IS_EXIST('STOCK_SELECT_TYPE09_' + str_date + '.xlsx'):
+		file_list.append('STOCK_SELECT_TYPE09_' + str_date + '.xlsx')
+		file_list2.append('STOCK_SELECT_TYPE09_' + str_date + '.xlsx')
+
+	if FILE_IS_EXIST('STOCK_SELECT_TYPE10_' + str_date + '.xlsx'):
+		file_list.append('STOCK_SELECT_TYPE10_' + str_date + '.xlsx')
+		file_list2.append('STOCK_SELECT_TYPE10_' + str_date + '.xlsx')
+
+	if FILE_IS_EXIST('STOCK_SELECT_TYPE11_' + str_date + '.xlsx'):
+		file_list2.append('STOCK_SELECT_TYPE11_' + str_date + '.xlsx')
+
+	if FILE_IS_EXIST('STOCK_SELECT_TYPE12_' + str_date + '.xlsx'):
+		file_list2.append('STOCK_SELECT_TYPE12_' + str_date + '.xlsx')
 
 	#發送郵件程序
 	m = GMail.Mailer()
@@ -79,7 +108,7 @@ def MAIN_DAILY_MAIL():
 
 		print('@@@ 郵件清單2發送:')
 		m.recipients = ['tenya.shiue@gmail.com', 'bryson0083@gmail.com']
-		m.subject = '每日程式選股清單' + str_date
+		m.subject = 'test每日程式選股清單' + str_date
 		m.message = '你好:\n以下為本日程式選股清單，詳見附件檔案.\n\n\n'
 		m.message +='檔案說明\n'
 		m.message +='STOCK_CHIP_ANA:\n'
@@ -113,11 +142,11 @@ def MAIN_DAILY_MAIL():
 		err_flag = True
 		print("DAILY_MAIL raise exception:\n" + str(e) + "\n")
 		file.write("DAILY_MAIL raise exception:\n" + str(e) + "\n")
-
+	
 	tEnd = time.time()#計時結束
 	file.write ("\n\n\n結轉耗時 %f sec\n" % (tEnd - tStart)) #會自動做進位
 	file.write("*** End LOG ***\n")
-
+	
 	# Close File
 	file.close()
 

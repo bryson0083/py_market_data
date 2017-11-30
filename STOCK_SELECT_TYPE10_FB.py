@@ -34,18 +34,24 @@ def MAIN_STOCK_SELECT_TYPE10_FB():
 	sh = wb.sheet_by_index(0)
 	row_cnt = sh.nrows
 
+	na_flag = False
+	#print(sh.cell(0,0).value)
+	if sh.cell(0,0).value == '今日無符合條件之股票.':
+		na_flag = True
+
 	row_ls = []
-	for i in range(1,row_cnt):
-		d = {}
-		#print(i)
-		d['股票代號'] = sh.cell(i,0).value.replace('.TW','')
-		d['名稱'] = sh.cell(i,1).value
-		d['外資買賣超天數'] = sh.cell(i,4).value
-		d['投信買賣超天數'] = sh.cell(i,5).value
-		d['自營商買賣超天數'] = sh.cell(i,6).value
-		d['類別'] = sh.cell(i,7).value
-		#print(d)
-		row_ls.append(d)
+	if na_flag == False:
+		for i in range(1,row_cnt):
+			d = {}
+			#print(i)
+			d['股票代號'] = sh.cell(i,0).value.replace('.TW','')
+			d['名稱'] = sh.cell(i,1).value
+			d['外資買賣超天數'] = sh.cell(i,4).value
+			d['投信買賣超天數'] = sh.cell(i,5).value
+			d['自營商買賣超天數'] = sh.cell(i,6).value
+			d['類別'] = sh.cell(i,7).value
+			#print(d)
+			row_ls.append(d)
 
 	#關閉excel檔案
 	wb.release_resources()
@@ -61,17 +67,21 @@ def MAIN_STOCK_SELECT_TYPE10_FB():
 		#轉存firebase前，清空線上的資料
 		fdb.delete('/STOCK_S10', None)
 
-		#資料轉存firebase
-		for row in row_ls:
-			fdb.post('/STOCK_S10', row)
+		if na_flag == False:
+			#資料轉存firebase
+			for row in row_ls:
+				fdb.post('/STOCK_S10', row)
 
-		print('上傳STOCK_S10成功.')
+			print('上傳STOCK_S10成功.')
+		else:
+			print('今日無符合條件之股票，不做資料上傳.')
+
 	except Exception as e:
 		print('Err: 資料上傳Firebase table => STOCK_S10異常.')
 		print(e.args)
 		return
 
-	print("End of prog.")
+	print("End of prog.\n\n")
 
 if __name__ == '__main__':
 	MAIN_STOCK_SELECT_TYPE10_FB()	
