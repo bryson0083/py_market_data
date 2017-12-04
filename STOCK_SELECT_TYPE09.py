@@ -11,7 +11,7 @@
 	並加上以上過濾條件
 	A. 3條均線變異數介於0~1間(變異數值太大，線就離太遠了)
 	B. 近六天成交量平均量成長30%以上，且日均量500張以上
-	C. 當天收盤漲幅3%以上(當天上漲3%以上)
+	C. 當天上漲3%以上
 	D. 最近一交易日，收盤價在8MA跟50MA之上
 
 	買賣超代碼
@@ -80,11 +80,6 @@ def Stock_Ana(arg_stock, str_prev_date, str_today):
 		if avg_vol > 0:
 			rt = (last_vol.iloc[0] - avg_vol) / avg_vol * 100
 
-		#最近一天交易日，K棒本體漲幅
-		kbody_chg = 0
-		if last_open.iloc[0] > 0:
-			kbody_chg = (last_close.iloc[0] - last_open.iloc[0]) / last_open.iloc[0] * 100
-
 		#最近一天交易日當天漲幅
 		rise_rt = 0
 		if prev_close.iloc[0] > 0:
@@ -119,11 +114,11 @@ def Stock_Ana(arg_stock, str_prev_date, str_today):
 		ls_ma.extend(df['ma8'].tail(6))
 		var_val = statistics.variance(ls_ma)
 
-		#三條均線變異數介於0~1間、最近一天成交量相對平均量成長30%、紅K棒實體3%以上(或當天上漲3%以上)、
+		#三條均線變異數介於0~1間、最近一天成交量相對平均量成長30%、當天上漲3%以上、
 		#最近一天收盤價在8MA跟50MA之上、成交量均量需大於500張
 		if (var_val > 0 and var_val < 1) and \
 		   rt >= 30 and \
-		   (kbody_chg >= 3 or rise_rt >= 3) and \
+		   rise_rt >= 3 and \
 		   (last_close.iloc[0] > last_8ma.iloc[0]) and \
 		   (last_close.iloc[0] > last_50ma.iloc[0]) and \
 		   avg_vol > 500:
