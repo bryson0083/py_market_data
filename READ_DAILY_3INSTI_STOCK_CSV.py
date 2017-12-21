@@ -9,6 +9,12 @@
 @Note: 
 	證交所三大法人個股買賣超日報
 	讀取下載後的CSV檔，寫入資料庫
+
+	1. 20171218起，原始資料"外資買賣超股數"拆分為，
+	   外陸資買賣超股數(不含外資自營商)、外資自營商買賣超股數
+
+	   PS:
+	   20171215前的資料欄位，維持不變
 	
 """
 import csv
@@ -76,7 +82,12 @@ def READ_CSV(arg_date):
 			data = list(filter(None, data))	#過濾empty string，寫法等同於[str(item) for item in quo_list[idx] if item]，但filter運算較快
 
 			# 判斷若list data長度不滿16，跳出迴圈
-			if len(data) != 16:
+			# (20171218起，格式與之前不同，中止條件不同)
+			col_ub = 16		#適用於20171215前資料
+			if arg_date >= '20171218':
+				col_ub = 19
+
+			if len(data) != col_ub:
 				break
 
 			all_data.append(data)
@@ -92,8 +103,14 @@ def READ_CSV(arg_date):
 	
 	#all_data list拋到pandas
 	df = pd.DataFrame(all_data[1:], columns = all_data[0])
-	df2 = df.loc[:,['證券代號', '證券名稱', '外資買賣超股數', '投信買賣超股數', '自營商買賣超股數']]
-	#print(df2)
+
+	#適用於20171215前資料
+	ls_title = ['證券代號', '證券名稱', '外資買賣超股數', '投信買賣超股數', '自營商買賣超股數']
+	if arg_date >= '20171218':
+		ls_title = ['證券代號', '證券名稱', '外陸資買賣超股數(不含外資自營商)', '外資自營商買賣超股數', '投信買賣超股數', '自營商買賣超股數']
+
+	df2 = df.loc[:,ls_title]
+	#print(df2.head())
 
 	#寫入、更新資料庫
 	STORE_DB(df2, arg_date)
@@ -116,7 +133,14 @@ def STORE_DB(arg_df, arg_date):
 		comp_id = comp_id.replace('"','').replace("=","").strip() + ".TW"
 		
 		comp_name = str(arg_df.loc[i]['證券名稱']).strip()
-		fr_net_bas = arg_df.loc[i]['外資買賣超股數'].replace(",","").strip()
+
+		if arg_date >= '20171218':
+			fr1 = arg_df.loc[i]['外陸資買賣超股數(不含外資自營商)'].replace(",","").strip()
+			fr2 = arg_df.loc[i]['外資自營商買賣超股數'].replace(",","").strip()
+			fr_net_bas = int(fr1) + int(fr2)
+		else:
+			fr_net_bas = arg_df.loc[i]['外資買賣超股數'].replace(",","").strip()
+
 		it_net_bas = arg_df.loc[i]['投信買賣超股數'].replace(",","").strip()
 		dl_net_bas = arg_df.loc[i]['自營商買賣超股數'].replace(",","").strip()
 		
@@ -214,8 +238,8 @@ def MAIN_READ_DAILY_3INSTI_STOCK_CSV():
 	end_date = parser.parse(str(dt)).strftime("%Y%m%d")
 
 	#for需要時手動設定日期區間用
-	#start_date = "20171101"
-	#end_date = "20171127"
+	#start_date = "20171218"
+	#end_date = "20171218"
 
 	# 寫入LOG File
 	str_date = str(datetime.datetime.now())
