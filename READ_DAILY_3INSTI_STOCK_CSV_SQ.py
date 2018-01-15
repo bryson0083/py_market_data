@@ -96,7 +96,13 @@ def READ_CSV(arg_date):
 	
 	#all_data list拋到pandas
 	df = pd.DataFrame(all_data[1:], columns = all_data[0])
-	df2 = df.loc[:,['代號', '名稱', '外資及陸資淨買股數', '投信淨買股數', '自營淨買股數']]
+
+	#適用於20180115前資料
+	ls_title = ['代號', '名稱', '外資及陸資淨買股數', '投信淨買股數', '自營淨買股數']
+	if arg_date >= '20180115':
+		ls_title = ['代號', '名稱', '外資及陸資-買賣超股數', '投信-買賣超股數', '自營商-買賣超股數']
+
+	df2 = df.loc[:,ls_title]
 	#print(df2)
 
 	#寫入、更新資料庫
@@ -117,9 +123,15 @@ def STORE_DB(arg_df, arg_date):
 		comp_id = comp_id.replace('"','').replace("=","").strip() + ".TW"
 		
 		comp_name = str(arg_df.loc[i]['名稱']).strip()
-		fr_net_bas = arg_df.loc[i]['外資及陸資淨買股數'].replace(",","").strip()
-		it_net_bas = arg_df.loc[i]['投信淨買股數'].replace(",","").strip()
-		dl_net_bas = arg_df.loc[i]['自營淨買股數'].replace(",","").strip()
+
+		if arg_date >= '20180115':
+			fr_net_bas = arg_df.loc[i]['外資及陸資-買賣超股數'].replace(",","").strip()
+			it_net_bas = arg_df.loc[i]['投信-買賣超股數'].replace(",","").strip()
+			dl_net_bas = arg_df.loc[i]['自營商-買賣超股數'].replace(",","").strip()
+		else:
+			fr_net_bas = arg_df.loc[i]['外資及陸資淨買股數'].replace(",","").strip()
+			it_net_bas = arg_df.loc[i]['投信淨買股數'].replace(",","").strip()
+			dl_net_bas = arg_df.loc[i]['自營淨買股數'].replace(",","").strip()
 		
 		# 最後維護日期時間
 		str_date = str(datetime.datetime.now())
