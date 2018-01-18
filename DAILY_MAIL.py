@@ -108,7 +108,7 @@ def MAIN_DAILY_MAIL():
 
 		print('@@@ 郵件清單2發送:')
 		m.recipients = ['tenya.shiue@gmail.com', 'bryson0083@gmail.com']
-		m.subject = 'test每日程式選股清單' + str_date
+		m.subject = '每日程式選股清單' + str_date
 		m.message = '你好:\n以下為本日程式選股清單，詳見附件檔案.\n\n\n'
 		m.message +='檔案說明\n'
 		m.message +='STOCK_CHIP_ANA:\n'
@@ -142,11 +142,11 @@ def MAIN_DAILY_MAIL():
 		err_flag = True
 		print("DAILY_MAIL raise exception:\n" + str(e) + "\n")
 		file.write("DAILY_MAIL raise exception:\n" + str(e) + "\n")
-	
+
 	tEnd = time.time()#計時結束
 	file.write ("\n\n\n結轉耗時 %f sec\n" % (tEnd - tStart)) #會自動做進位
 	file.write("*** End LOG ***\n")
-	
+
 	# Close File
 	file.close()
 

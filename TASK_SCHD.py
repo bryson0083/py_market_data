@@ -107,8 +107,8 @@ def job4():
 		if task_mode == 'A':
 			p = Popen("STOCK_SELECT_FB.bat")
 			stdout, stderr = p.communicate()
-			
-			dmail.MAIN_DAILY_MAIL()
+
+			#dmail.MAIN_DAILY_MAIL()
 
 def job5():
 	str_date = str(datetime.datetime.now())
@@ -137,7 +137,7 @@ if __name__ == '__main__':
 	#手動測試單獨執行用
 	#ss05.MAIN_STOCK_SELECT_TYPE05()
 	#job()
-	
+
 	#上市櫃信用交易統計、融資融券彙總，資料抓取
 	#上市櫃外資及陸資投資持股統計，資料抓取
 	if task_mode == "B":
@@ -166,4 +166,3 @@ if __name__ == '__main__':
 	while True:
 		schedule.run_pending()
 		time.sleep(1)
-	
