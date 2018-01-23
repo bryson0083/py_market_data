@@ -96,8 +96,8 @@ def MAIN_GET_DAILY_3INSTI_STOCK():
 	end_date = parser.parse(str(dt)).strftime("%Y%m%d")
 
 	#for需要時手動設定日期區間用(資料最早日期20120502起)
-	#start_date = "20120502"
-	#end_date = "20161231"
+	#start_date = "20171009"
+	#end_date = "20171010"
 
 	#LOG檔
 	str_date = str(datetime.datetime.now())

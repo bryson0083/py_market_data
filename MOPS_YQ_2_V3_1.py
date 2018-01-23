@@ -65,8 +65,7 @@ def mode_c():
 		qq = "04"
 	elif mmdd >= "0515" and mmdd <= "0605":
 		qq = "01"
-	#elif mmdd >= "0814" and mmdd <= "0905":
-	elif mmdd >= "1101" and mmdd <= "1110":
+	elif mmdd >= "0814" and mmdd <= "0905":
 		qq = "02"
 	elif mmdd >= "1114" and mmdd <= "1205":
 		qq = "03"
@@ -101,7 +100,7 @@ def mode_h():
 # 跑特定區間，結轉資料(自行修改參數條件)
 def mode_a():
 	#證交所最早的資料(IFRS後)從102年第一季開始提供
-	for y in range(2015,2017,1):
+	for y in range(2013,2018,1):
 		#print("y=" + str(y))
 		yyy = str(y - 1911)
 		q = 1
@@ -119,8 +118,8 @@ def mode_a():
 			print("mode_a: 特定區間，結轉yyyqq=" + yyy + qq)
 
 			# 開始抓取資料
-			#MOPS_YQ_2(yyy, qq, "sii")
-			#MOPS_YQ_2(yyy, qq, "otc")
+			MOPS_YQ_2(yyy, qq, "sii")
+			MOPS_YQ_2(yyy, qq, "otc")
 
 			q += 1
 
@@ -130,12 +129,14 @@ def proc_db(df, yyyy, qq):
 
 	for i in range(0,len(df)):
 		#print(str(df.index[i]))
-		comp_id = str(df.iloc[i][0])
-		comp_name = str(df.iloc[i][1])
-		bvps = str(df.iloc[i][2])
+		comp_id = str(df.loc[i]['公司代號'])
+		comp_name = str(df.loc[i]['公司名稱'])
+		capital = str(df.loc[i]['股本'])
+		capital = re.sub("[^-0-9^.]", "", capital) # 數字做格式控制
+		bvps = str(df.loc[i]['淨值'])
 		bvps = re.sub("[^-0-9^.]", "", bvps) # 數字做格式控制
 
-		#print(comp_id + "  " + comp_name + "   " + bvps + "\n")
+		#print(comp_id + "  " + comp_name + "   " + capital + "   " + bvps + "\n")
 		# 最後維護日期時間
 		str_date = str(datetime.datetime.now())
 		date_last_maint = parser.parse(str_date).strftime("%Y%m%d")
@@ -160,6 +161,7 @@ def proc_db(df, yyyy, qq):
 			sqlstr = sqlstr + "'" + qq + "',"
 			sqlstr = sqlstr + "0,"
 			sqlstr = sqlstr + " " + bvps + ","
+			sqlstr = sqlstr + " " + capital + ","
 			sqlstr = sqlstr + "'" + date_last_maint + "',"
 			sqlstr = sqlstr + "'" + time_last_maint + "',"
 			sqlstr = sqlstr + "'" + prog_last_maint + "' "
@@ -168,6 +170,7 @@ def proc_db(df, yyyy, qq):
 		else:
 			sqlstr = "update MOPS_YQ set "
 			sqlstr = sqlstr + "bvps=" + bvps + ","
+			sqlstr = sqlstr + "capital=" + capital + ","
 			sqlstr = sqlstr + "date_last_maint='" + date_last_maint + "',"
 			sqlstr = sqlstr + "time_last_maint='" + time_last_maint + "',"
 			sqlstr = sqlstr + "prog_last_maint='" + prog_last_maint + "' "
@@ -193,6 +196,8 @@ def proc_db(df, yyyy, qq):
 		conn.commit()
 	else:
 		conn.execute("rollback")
+
+	return
 
 # 結轉網頁資料
 def MOPS_YQ_2(arg_yyy, arg_qq, arg_typek):
@@ -258,52 +263,37 @@ def MOPS_YQ_2(arg_yyy, arg_qq, arg_typek):
 		#計算有多少個符合條件特徵的表格個數
 		tables = driver.find_elements_by_xpath("//table[@class='hasBorder']")
 		tb_cnt = len(tables)
-		print("符合條件特徵的table個數=" + str(tb_cnt))
+		#print("table個數=" + str(tb_cnt))
 
-		#網頁中符合條件的table資料都掃過一遍
-		i = 1
-		#tb_cnt = 1
-		data = []
-		while i <= tb_cnt:
-			#print("i=" + str(i))
-			#組合搜尋條件參數
-			arg_str = "//table[@class='hasBorder'][" + str(i) + "]/tbody"
-
-			#讀取表格資料內容
-			table = elem.find_element_by_xpath(arg_str)
+		df_all = pd.DataFrame()
+		for i in range(1, tb_cnt+1):
+			table = elem.find_element_by_xpath('//*[@id="table01"]/table[' + str(i) +']')
+			tb_data = []
 			for row in table.find_elements_by_xpath(".//tr"):
-				# 把tr下，所有td的欄位資料讀取到一個list中
-				a_list = [td.text for td in row.find_elements_by_xpath(".//td[text()]")]
+				th_list = [th.text for th in row.find_elements_by_xpath(".//th[text()]")]
+				if len(th_list) > 0:
+					tb_data.append(th_list)
+				
+				td_list = [td.text for td in row.find_elements_by_xpath(".//td[text()]")]
+				if len(td_list) > 0:
+					tb_data.append(td_list)
 
-				# a_list從td tag讀進資料，第一筆資料都是empty list，因此要過濾掉
-				if a_list:
-					a_list = a_list
-					last_elem_idx = len(a_list)
-					#print(a_list[0] + "," + a_list[1] + "," + a_list[last_elem_idx-1])
-
-					comp_id = a_list[0]		# 公司股票號碼
-					comp_name = a_list[1]	# 公司股票名稱
-
-					bvps = a_list[last_elem_idx-1] # 每股參考淨值
-					bvps = re.sub("[^-0-9^.]", "", bvps) # 數字做格式控制
-
-					#print(comp_id + "," + comp_name + "," + bvps)
-					data.append([comp_id, comp_name, bvps])
-
-			i += 1
+			df = pd.DataFrame(data=tb_data[1:], columns=tb_data[0])
+			df = df.loc[:,['公司\n代號', '公司名稱', '股本', '每股參考淨值']]
+			df.columns = ['公司代號', '公司名稱', '股本', '淨值']
+			df_all = pd.concat([df_all, df], ignore_index=True)
+		
+		#print(df_all)
 
 		# 關閉瀏覽器視窗
 		driver.quit();
 
-		#print(data)
-		df = pd.DataFrame(data=data, columns=['股票號碼','股票名稱','每股參考淨值'])
-		#print(df)
-
 		# 資料庫存取
-		proc_db(df, yyyy, qq)
+		proc_db(df_all, yyyy, qq)
 
 		print ("擷取資料完畢 ...")
 		file.write("擷取資料完畢 ...\n")
+		return
 
 def MAIN_MOPS_YQ_2(arg_mode='C'):
 	global err_flag
