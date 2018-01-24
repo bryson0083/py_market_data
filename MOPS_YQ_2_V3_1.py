@@ -273,7 +273,7 @@ def MOPS_YQ_2(arg_yyy, arg_qq, arg_typek):
 				th_list = [th.text for th in row.find_elements_by_xpath(".//th[text()]")]
 				if len(th_list) > 0:
 					tb_data.append(th_list)
-				
+
 				td_list = [td.text for td in row.find_elements_by_xpath(".//td[text()]")]
 				if len(td_list) > 0:
 					tb_data.append(td_list)
@@ -282,7 +282,7 @@ def MOPS_YQ_2(arg_yyy, arg_qq, arg_typek):
 			df = df.loc[:,['公司\n代號', '公司名稱', '股本', '每股參考淨值']]
 			df.columns = ['公司代號', '公司名稱', '股本', '淨值']
 			df_all = pd.concat([df_all, df], ignore_index=True)
-		
+
 		#print(df_all)
 
 		# 關閉瀏覽器視窗
