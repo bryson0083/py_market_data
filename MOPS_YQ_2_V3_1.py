@@ -204,6 +204,9 @@ def MOPS_YQ_2(arg_yyy, arg_qq, arg_typek):
 	global err_flag
 	global file
 
+	err_flag = False
+	print("開始抓取資料:" + arg_yyy + "-" + arg_qq + "-" + arg_typek)
+
 	# 建立網頁讀取
 	#driver = webdriver.Chrome()	# 需要看到執行過程可以用Chrome
 	driver = webdriver.PhantomJS()
@@ -247,53 +250,60 @@ def MOPS_YQ_2(arg_yyy, arg_qq, arg_typek):
 			print ("Load cnt=" + str(cnt))
 			if cnt >= 3:
 				err_flag = True
-
-				# 關閉瀏覽器視窗
-				driver.quit();
-
 				# 讀取時間太久，直接結束程式
-				print("Err: 異常中止，網頁讀取異常或該網頁無資料.")
-				print(e.message)
-				print(e.args)
+				print("Err: 異常中止，網頁讀取逾時或該網頁無資料.")
+				print("資料參數:" + arg_yyy + " " + arg_qq + " " + arg_typek)
 				file.write("Err: 異常中止，網頁讀取逾時或該網頁無資料.\n")
-				file.write(e.message + "\n" + e.args + "\n\n")
+				file.write("資料參數:" + arg_yyy + " " + arg_qq + " " + arg_typek + "\n")
+				file.write(str(e.args) + "\n\n")
 				return
 
 	if err_flag == False:
-		#計算有多少個符合條件特徵的表格個數
-		tables = driver.find_elements_by_xpath("//table[@class='hasBorder']")
-		tb_cnt = len(tables)
-		#print("table個數=" + str(tb_cnt))
+		try:
+			#計算有多少個符合條件特徵的表格個數
+			tables = driver.find_elements_by_xpath("//table[@class='hasBorder']")
+			tb_cnt = len(tables)
+			#print("table個數=" + str(tb_cnt))
 
-		df_all = pd.DataFrame()
-		for i in range(1, tb_cnt+1):
-			table = elem.find_element_by_xpath('//*[@id="table01"]/table[' + str(i) +']')
-			tb_data = []
-			for row in table.find_elements_by_xpath(".//tr"):
-				th_list = [th.text for th in row.find_elements_by_xpath(".//th[text()]")]
-				if len(th_list) > 0:
-					tb_data.append(th_list)
+			df_all = pd.DataFrame()
+			for i in range(1, tb_cnt+1):
+				table = elem.find_element_by_xpath('//*[@id="table01"]/table[' + str(i) +']')
+				tb_data = []
+				for row in table.find_elements_by_xpath(".//tr"):
+					th_list = [th.text for th in row.find_elements_by_xpath(".//th[text()]")]
+					if len(th_list) > 0:
+						tb_data.append(th_list)
 
-				td_list = [td.text for td in row.find_elements_by_xpath(".//td[text()]")]
-				if len(td_list) > 0:
-					tb_data.append(td_list)
+					td_list = [td.text for td in row.find_elements_by_xpath(".//td[text()]")]
+					if len(td_list) > 0:
+						tb_data.append(td_list)
 
-			df = pd.DataFrame(data=tb_data[1:], columns=tb_data[0])
-			df = df.loc[:,['公司\n代號', '公司名稱', '股本', '每股參考淨值']]
-			df.columns = ['公司代號', '公司名稱', '股本', '淨值']
-			df_all = pd.concat([df_all, df], ignore_index=True)
+				df = pd.DataFrame(data=tb_data[1:], columns=tb_data[0])
+				df = df.loc[:,['公司\n代號', '公司名稱', '股本', '每股參考淨值']]
+				df.columns = ['公司代號', '公司名稱', '股本', '淨值']
+				df_all = pd.concat([df_all, df], ignore_index=True)
 
-		#print(df_all)
+		except Exception as e:
+			err_flag = True
+			print("Err: 異常中止，網頁讀取不完整，詳見LOG檔案.")
+			print("資料參數:" + arg_yyy + " " + arg_qq + " " + arg_typek)
+			file.write("Err: 異常中止，網頁讀取不完整.\n")
+			file.write("資料參數:" + arg_yyy + " " + arg_qq + " " + arg_typek + "\n")
+			file.write(str(e.args) + "\n\n")
 
-		# 關閉瀏覽器視窗
-		driver.quit();
-
+	#print(df_all)
+	if err_flag == False:
 		# 資料庫存取
 		proc_db(df_all, yyyy, qq)
 
+	if err_flag == False:
 		print ("擷取資料完畢 ...")
 		file.write("擷取資料完畢 ...\n")
-		return
+	
+	# 關閉瀏覽器視窗
+	driver.quit();
+
+	return
 
 def MAIN_MOPS_YQ_2(arg_mode='C'):
 	global err_flag
