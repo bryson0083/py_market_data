@@ -154,12 +154,11 @@ def proc_db(df, yyyy, qq):
 		result = cursor.fetchone()
 
 		if result[0] == 0:
-			sqlstr = "insert into MOPS_YQ values ("
+			sqlstr = "insert into MOPS_YQ ('COMP_ID','COMP_NAME','YYYY', 'QQ', 'BVPS', 'CAPITAL','DATE_LAST_MAINT','TIME_LAST_MAINT','PROG_LAST_MAINT') values ("
 			sqlstr = sqlstr + "'" + comp_id + "',"
 			sqlstr = sqlstr + "'" + comp_name + "',"
 			sqlstr = sqlstr + "'" + yyyy + "',"
 			sqlstr = sqlstr + "'" + qq + "',"
-			sqlstr = sqlstr + "0,"
 			sqlstr = sqlstr + " " + bvps + ","
 			sqlstr = sqlstr + " " + capital + ","
 			sqlstr = sqlstr + "'" + date_last_maint + "',"
@@ -301,7 +300,7 @@ def MOPS_YQ_2(arg_yyy, arg_qq, arg_typek):
 		file.write("擷取資料完畢 ...\n")
 	
 	# 關閉瀏覽器視窗
-	driver.quit();
+	driver.quit()
 
 	return
 
