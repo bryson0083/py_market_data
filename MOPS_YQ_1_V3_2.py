@@ -178,13 +178,12 @@ def proc_db(df, yyyy, qq):
 		result = cursor.fetchone()
 
 		if result[0] == 0:
-			sqlstr  = "insert into MOPS_YQ values ("
+			sqlstr  = "insert into MOPS_YQ ('COMP_ID','COMP_NAME','YYYY', 'QQ', 'EPS','DATE_LAST_MAINT','TIME_LAST_MAINT','PROG_LAST_MAINT') values ("
 			sqlstr += "'" + comp_id + "',"
 			sqlstr += "'" + comp_name + "',"
 			sqlstr += "'" + yyyy + "',"
 			sqlstr += "'" + qq + "',"
 			sqlstr += " " + eps + ","
-			sqlstr += "0,"
 			sqlstr += "'" + date_last_maint + "',"
 			sqlstr += "'" + time_last_maint + "',"
 			sqlstr += "'" + prog_last_maint + "' "
@@ -202,13 +201,13 @@ def proc_db(df, yyyy, qq):
 
 		try:
 			cursor = conn.execute(sqlstr)
-		except sqlite3.Error as er:
+		except sqlite3.Error as e:
 			err_flag = True
-			print("insert/upadte MOPS_YQ er=" + er.args[0])
+			print("insert/upadte MOPS_YQ er=" + e.args[0])
 			print(comp_id + " " + yyyy + qq + "資料寫入/更新異常...Rollback!")
 			file.write(comp_id + " " + yyyy + qq + "資料寫入/更新異常...Rollback!\n")
-			file.write("insert/upadte MOPS_YQ er=" + er.args[0] + "\n")
-			file.write(strsql + "\n")
+			file.write("insert/upadte MOPS_YQ er=" + e.args[0] + "\n")
+			file.write(sqlstr + "\n")
 
 		# 關閉DB cursor
 		cursor.close()
@@ -251,10 +250,10 @@ def MOPS_YQ_1(yyy, qq, mkt_tp):
 	except Exception as e:
 		err_flag = True
 		print("Err: 異常中止，讀取來源網頁錯誤，請檢查來源網頁是否已變動.")
-		print(e.message)
+		print(str(e.args))
 		print(e.args)
 		file.write("Err: 異常中止，讀取來源網頁錯誤，請檢查來源網頁是否已變動.\n")
-		file.write(e.message + "\n" + e.args + "\n\n")
+		file.write(str(e.args) + "\n\n")
 		return
 
 	if err_flag == False:
@@ -282,6 +281,8 @@ def MOPS_YQ_1(yyy, qq, mkt_tp):
 			all_df = pd.concat([all_df,df],ignore_index=True)
 			i += 1
 
+
+		#print(all_df)
 		# 資料庫存取
 		proc_db(all_df, yyyy, qq)
 
