@@ -5,7 +5,7 @@
 @author: Bryson Xue
 
 @target_rul:
-	查詢網頁 => http://www.tdcc.com.tw/smWeb/QryStock.jsp
+	查詢網頁 => http://www.tdcc.com.tw/smWeb/QryStockAjax.do
 
 @Note:
 	集保中心~集保戶股權分散表查詢
@@ -27,6 +27,8 @@ import datetime
 from dateutil.relativedelta import relativedelta
 import os.path
 import sys
+from selenium import webdriver
+
 
 def GET_DATA(arg_stock, arg_date):
 	global err_flag
@@ -48,7 +50,7 @@ def GET_DATA(arg_stock, arg_date):
 	else:
 		err_flag = True
 		print(str(arg_stock) + " 日期" + arg_date + "資料已存在，不再重新抓取.\n")
-		file.write(str(arg_stock) + " 日期" + arg_date + "資料已存在，不再重新抓取.\n")
+		#file.write(str(arg_stock) + " 日期" + arg_date + "資料已存在，不再重新抓取.\n")
 
 def DO_WAIT():
 	#隨機等待一段時間
@@ -79,28 +81,36 @@ def GET_DATE_LIST():
 	global err_flag
 	global file
 
-	headers = {'User-Agent':'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/58.0.3029.110 Safari/537.36'}
-	#session = requests.session()
-
-	# 拋送查詢條件到頁面，並取回查詢結果內容
+	# 取得日期清單
 	try:
-		URL = 'http://www.tdcc.com.tw/smWeb/QryStock.jsp'
-		r = requests.get(URL, headers=headers)
-		r.raise_for_status()	#https://stackoverflow.com/questions/15258728/requests-how-to-tell-if-youre-getting-a-404
-		r.encoding = 'big5'
+		# 建立網頁讀取
+		#driver = webdriver.Chrome()	# 需要看到執行過程可以用Chrome
+		driver = webdriver.PhantomJS()
+		driver.get("https://www.tdcc.com.tw/smWeb/QryStock.jsp")
+
+		time.sleep(1)
+
+		#html_source = driver.page_source
+		#print(html_source)
+
+		dt_obj = driver.find_element_by_id("scaDates")
+		#print(dt_list.text)
+
+		dt_list = []
+		for element in dt_obj.find_elements_by_tag_name('option'):
+			dt_list.append(element.text)
+
 	except Exception as e:
 		err_flag = True
 		print("Err from GET_DATE_LIST(): \n$$$ 集保中心網站讀取錯誤，請確認網頁是否正常. $$$\n" + str(e) + "\n")
 		file.write("Err from GET_DATE_LIST(): \n$$$ 集保中心網站讀取錯誤，請確認網頁是否正常. $$$\n" + str(e) + "\n")
 		return []
 
-	sp = BeautifulSoup(r.text, 'html.parser')
-	opt = sp.select('option')
-
-	dt_list = [item.text.strip() for item in opt]
 	dt_list = sorted(dt_list, reverse=False)
-	#print(dt_list)
 
+	# 關閉瀏覽器視窗
+	driver.quit()
+	
 	return dt_list
 
 def GET_WEB_DATA(arg_stock, arg_date):
@@ -115,12 +125,24 @@ def GET_WEB_DATA(arg_stock, arg_date):
 	print("\n抓取" + sear_comp_id + " " + comp_name + " 日期" + arg_date + "集保戶股權分散資料.")
 
 	headers = {'User-Agent':'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/58.0.3029.110 Safari/537.36'}
-	#session = requests.session()
+	s = requests.session()
+
+	payload = {
+		   "scaDates": arg_date,
+		   "scaDate": arg_date,
+		   "SqlMethod": "StockNo",
+		   "StockNo": comp_id,
+		   "radioStockNo": comp_id,
+		   "StockName": "",
+		   "REQ_OPR": "SELECT",
+		   "clkStockNo": comp_id,
+		   "clkStockName": ""
+		   }
 
 	# 拋送查詢條件到頁面，並取回查詢結果內容
 	try:
-		URL = 'http://www.tdcc.com.tw/smWeb/QryStock.jsp?SCA_DATE=' + arg_date + '&SqlMethod=StockNo&StockNo=' + comp_id + '&StockName=&sub=%ACd%B8%DF'
-		r = requests.get(URL, headers=headers)
+		URL = 'http://www.tdcc.com.tw/smWeb/QryStockAjax.do'
+		r = s.post(URL, data=payload, headers=headers)
 		r.raise_for_status()
 		r.encoding = 'big5'
 		sp = BeautifulSoup(r.text, 'html.parser')
@@ -268,7 +290,7 @@ def MAIN_GET_TDCC_STOCK_DISPERSION(arg_mode='A'):
 	if len(dt_list) > 0:
 		#讀取上市櫃股票清單
 		strsql  = "select SEAR_COMP_ID,COMP_NAME, STOCK_TYPE from STOCK_COMP_LIST "
-		#strsql += "where SEAR_COMP_ID = '1103.TW' "
+		#strsql += "where SEAR_COMP_ID = '2034.TW' "
 		strsql += "order by STOCK_TYPE, SEAR_COMP_ID "
 		#strsql += "limit 1"
 
@@ -288,7 +310,6 @@ def MAIN_GET_TDCC_STOCK_DISPERSION(arg_mode='A'):
 					for dt in dt_list:
 						str_date = str(dt)
 						GET_DATA(stock, str_date)
-
 		else:
 			err_flag = True
 			print("$$$ 未取得公司清單資料. $$$")
