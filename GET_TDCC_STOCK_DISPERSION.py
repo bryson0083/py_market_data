@@ -282,17 +282,17 @@ def MAIN_GET_TDCC_STOCK_DISPERSION(arg_mode='A'):
 	conn = sqlite3.connect("market_price.sqlite")
 
 	#抓取網站日期清單
-	dt_list = GET_DATE_LIST()
+	#dt_list = GET_DATE_LIST()
 	#print(dt_list)
-	#dt_list = ['20170616', '20170623', '20170630', '20170707']	#for test 手動用
+	dt_list = ['20180323']	#for test 手動用
 
 	#依據所選模式抓取資料
 	if len(dt_list) > 0:
 		#讀取上市櫃股票清單
 		strsql  = "select SEAR_COMP_ID,COMP_NAME, STOCK_TYPE from STOCK_COMP_LIST "
-		#strsql += "where SEAR_COMP_ID = '2034.TW' "
+		strsql += "where SEAR_COMP_ID = '0050.TW' "
 		strsql += "order by STOCK_TYPE, SEAR_COMP_ID "
-		#strsql += "limit 1"
+		strsql += "limit 1"
 
 		cursor = conn.execute(strsql)
 		result = cursor.fetchall()
@@ -338,4 +338,6 @@ def MAIN_GET_TDCC_STOCK_DISPERSION(arg_mode='A'):
 	print("\n\n集保中心~集保戶股權分散表查詢，資料抓取結束...\n\n\n")
 
 if __name__ == '__main__':
-	MAIN_GET_TDCC_STOCK_DISPERSION()
+	ls = GET_DATE_LIST()
+	print(ls)
+	#MAIN_GET_TDCC_STOCK_DISPERSION()
