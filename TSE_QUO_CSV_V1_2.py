@@ -67,24 +67,16 @@ def TSE_QUO_READ_CSV(arg_date):
 				st_idx = i
 				#print("start from " + str(i) + "\n")
 		i += 1
-	
+
 	# 讀取當天個股收盤資料到list中
-	i = 0
 	idx = st_idx
 	all_data = []
-	while True:
-		#for item in quo_list[idx]:
-		#	print(item)
-
+	while idx < len(quo_list):
 		data = [str(item) for item in quo_list[idx]]
 		data = list(filter(None, data))	#過濾empty string，寫法等同於[str(item) for item in quo_list[idx] if item]，但filter運算較快
-
-		# 判斷若list data長度不滿16，跳出迴圈
-		if len(data) != 16:
-			break
+		#print(data)
 
 		all_data.append(data)
-		
 		idx += 1
 	
 	#all_data list拋到pandas
@@ -256,8 +248,8 @@ def MAIN_TSE_QUO_READ_CSV():
 	start_date = parser.parse(start_date).strftime("%Y/%m/%d")
 
 	#for需要時手動設定日期區間用
-	#start_date = "2017/11/07"
-	#end_date = "2017/11/07"
+	#start_date = "2018/06/19"
+	#end_date = "2018/06/19"
 
 	print("##############################################")
 	print("##      台灣證券交易所~上市收盤資料CSV      ##")

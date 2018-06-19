@@ -69,16 +69,12 @@ def SQUOTE_READ_CSV(arg_date):
 		i += 1
 	
 	# 讀取當天個股收盤資料到list中
-	i = 0
 	idx = st_idx
 	all_data = []
 	tot_cnt = len(quo_list)
-	while True:
-		#for item in quo_list[idx]:
-		#	print(item)
-		
+	while idx < len(quo_list):
 		# 判斷檔案尾部或list長度不滿15，跳出迴圈
-		if (idx == tot_cnt) or (len(quo_list[idx]) != 15):
+		if len(quo_list[idx]) != 15:
 			break
 		
 		data = [str(item).replace(",","").strip() for item in quo_list[idx]]
@@ -257,8 +253,8 @@ def MAIN_SQUOTE_CSV():
 	start_date = parser.parse(start_date).strftime("%Y/%m/%d")
 
 	#for需要時手動設定日期區間用
-	#start_date = "2017/11/01"
-	#end_date = "2017/11/08"
+	#start_date = "2018/06/19"
+	#end_date = "2018/06/19"
 
 	print("##############################################")
 	print("##        櫃買中心 ~ 上櫃收盤資料CSV        ##")
