@@ -65,7 +65,7 @@ def MAIN_STOCK_COMP_LIST():
         print(e)
         file.write("$$$ Err: 上市公司清單資料抓取異常. $$$\n")
         file.write(str(e))
-    
+
     if err_yn == "N":
         data = [[td.text for td in row.select('td')]  # http://stackoverflow.com/questions/14487526/turning-beautifulsoup-output-into-matrix
                  for row in table.select('tr')]

@@ -4,9 +4,9 @@
 
 @author: Bryson Xue
 
-@target_rul: 
+@target_rul:
 
-@Note: 
+@Note:
     CSV檔案資料，寫入資料庫
 
 """
@@ -27,9 +27,9 @@ def SQUOTE_READ_CSV(arg_date):
 	str_date = str(int(arg_date[0:4]) - 1911) + arg_date[4:]
 	str_date = str_date.replace("/","")
 	print("讀取" + str_date + "收盤資料CSV檔案.")
-	
+
 	file_name = "./squote_data/" + str_date + ".csv"
-	
+
 	#判斷CSV檔案是否存在，若無檔案則跳回主程式
 	is_existed = os.path.exists(file_name)
 	if is_existed == False:
@@ -37,17 +37,17 @@ def SQUOTE_READ_CSV(arg_date):
 		print(arg_date + "無報價CSV檔.\n")
 		file.write(arg_date + "無報價CSV檔.\n")
 		return
-	
+
 	#讀取每日報價CSV檔
 	#with open('1050511.csv', 'r') as f:
 	with open(file_name, 'r') as f:
 		reader = csv.reader(f)
 		quo_list = list(reader)
-	
+
 	#關閉CSV檔案
 	f.close
 	#print(quo_list)
-	
+
 	#檢查檔案當天是否有交易資料，若無交易資料則跳回主程式
 	#(若檔案內容為"當天無收盤資料"，表示當天未開盤)
 	for item in quo_list:
@@ -56,7 +56,7 @@ def SQUOTE_READ_CSV(arg_date):
 				print(arg_date + "當天未開盤，無交易資料.\n\n")
 				file.write(arg_date + "當天未開盤，無交易資料.\n\n")
 				return
-	
+
 	#取得要讀取的資料起點位置(識別"代號")
 	st_idx = 0
 	i = 0
@@ -67,7 +67,7 @@ def SQUOTE_READ_CSV(arg_date):
 				st_idx = i
 				#print("start from " + str(i) + "\n")
 		i += 1
-	
+
 	# 讀取當天個股收盤資料到list中
 	idx = st_idx
 	all_data = []
@@ -76,44 +76,44 @@ def SQUOTE_READ_CSV(arg_date):
 		# 判斷檔案尾部或list長度不滿15，跳出迴圈
 		if len(quo_list[idx]) != 15:
 			break
-		
+
 		data = [str(item).replace(",","").strip() for item in quo_list[idx]]
 		id_c2 = str(quo_list[idx][0][0:2])
-		
+
 		#受益證券、權證不要
 		if ((id_c2 == "01") or (id_c2 == "70")):
 			pass
 		else:
 			all_data.append(data)
-		
+
 		idx += 1
 		i += 1
-	
+
 	#all_data list拋到pandas
 	df = pd.DataFrame(all_data[1:], columns = all_data[0])
 	df2 = df.loc[:,['代號', '名稱', '收盤', '開盤', '最高', '最低', '成交股數']]
 	#print(df2)
-	
+
 	#寫入、更新資料庫
 	SQUOTE_DB(df2, arg_date)
-	
+
 def SQUOTE_DB(arg_df, arg_date):
 	global err_flag
 	global file
 
 	#print(arg_df)
 	quo_date = arg_date.replace("/", "")
-	
+
 	#建立資料庫連線
 	conn = sqlite3.connect("market_price.sqlite")
-	
+
 	commit_flag = "Y"
 	cnt = 0
 	for i in range(0,len(arg_df)):
 		#print(str(df.index[i]))
 		comp_id = str(arg_df.iloc[i][0])
 		comp_id = comp_id.strip() + ".TW"
-		
+
 		comp_name = str(arg_df.iloc[i][1])
 		q_close = arg_df.iloc[i][2]	# 收盤價
 		q_open = arg_df.iloc[i][3]	# 開盤價
@@ -121,13 +121,13 @@ def SQUOTE_DB(arg_df, arg_date):
 		q_low = arg_df.iloc[i][5]	# 最低價
 		q_vol = arg_df.iloc[i][6]	# 成交量
 		#print(comp_id + "#" + comp_name + "#" + str(q_open) + "#" + str(q_high) + "#" + str(q_low) + "#" + str(q_close) + "#" + str(q_vol) + "#" + str(q_per) + "#\n")
-		
+
 		# 最後維護日期時間
 		str_date = str(datetime.datetime.now())
 		date_last_maint = parser.parse(str_date).strftime("%Y%m%d")
 		time_last_maint = parser.parse(str_date).strftime("%H%M%S")
 		prog_last_maint = "SQUOTE_CSV"
-		
+
 		#處理若資料為"--"時，給予預設值0
 		if q_open == "----":
 			q_open = 0
@@ -137,23 +137,23 @@ def SQUOTE_DB(arg_df, arg_date):
 			q_low = 0
 		if q_close == "----":
 			q_close = 0
-		
+
 		#原始CSV中，有部分股票，當天有交易，但是沒有任何成交量
 		#因此這些股票的當天交易資料，不寫入資料庫
 		if float(q_close) > 0 and int(q_vol) > 0:
 			insert_yn = "Y"
 		else:
 			insert_yn = "N"
-		
+
 		#檢查資料是否已存在
 		strsql  = "select count(*) from STOCK_QUO "
 		strsql += "where QUO_DATE = '" + quo_date + "' and "
 		strsql += "SEAR_COMP_ID='" + comp_id + "' "
-		
+
 		#print(strsql + "\n")
 		cursor = conn.execute(strsql)
 		result = cursor.fetchone()
-		
+
 		if result[0] == 0:
 			#print(comp_id + "沒資料\n")
 			# 日報價資料寫入
@@ -176,7 +176,7 @@ def SQUOTE_DB(arg_df, arg_date):
 				strsql += "'" + time_last_maint + "',"
 				strsql += "'" + prog_last_maint + "' "
 				strsql += ")"
-				
+
 				try:
 					cnt += 1
 					conn.execute(strsql)
@@ -205,7 +205,7 @@ def SQUOTE_DB(arg_df, arg_date):
 			strsql += "where "
 			strsql += "QUO_DATE = '" + quo_date + "' and "
 			strsql += "SEAR_COMP_ID='" + comp_id + "' "
-			
+
 			try:
 				#print(strsql + "\n")
 				conn.execute(strsql)
@@ -221,7 +221,7 @@ def SQUOTE_DB(arg_df, arg_date):
 
 		#關閉cursor
 		cursor.close()
-		
+
 	# 最後commit
 	if commit_flag == "Y":
 		conn.commit()
@@ -293,12 +293,12 @@ def MAIN_SQUOTE_CSV():
 			str_date = start_date
 		else:
 			str_date = parser.parse(str(dt)).strftime("%Y/%m/%d")
-			
+
 		#print(str_date + "\n")
-		
+
 		#讀取日期當天報價CSV檔
 		SQUOTE_READ_CSV(str_date)
-		
+
 		#日期往後推一天
 		dt = datetime.datetime.strptime(str_date, date_fmt).date()
 		dt = dt + relativedelta(days=1)

@@ -5,7 +5,7 @@
 @author: Bryson Xue
 
 @target_rul:
-	查詢網頁 => http://www.tdcc.com.tw/smWeb/QryStockAjax.do
+	查詢網頁 => https://www.tdcc.com.tw/smWeb/QryStock.jsp
 
 @Note:
 	集保中心~集保戶股權分散表查詢
@@ -14,6 +14,13 @@
 
 @Ref:
 	http://www.largitdata.com/course/53/
+	https://stackoverflow.com/questions/2052390/manually-raising-throwing-an-exception-in-python
+
+['20170407', '20170414', '20170421', '20170428', '20170505', '20170512', '20170519', '20170526', '20170603', '20170609', '20170616', '20170623', '20170630', '20170707', 
+ '20170714', '20170721', '20170728', '20170804', '20170811', '20170818', '20170825', '20170901', '20170908', '20170915', '20170922', '20170930', '20171006', '20171013', 
+ '20171020', '20171027', '20171103', '20171110', '20171117', '20171124', '20171201', '20171208', '20171215', '20171222', '20171229', '20180105', '20180112', '20180119', 
+ '20180126', '20180202', '20180209', '20180214', '20180223', '20180302', '20180309', '20180316', '20180323', '20180331', '20180403', '20180413', '20180420', '20180427', 
+ '20180504', '20180511', '20180518', '20180525', '20180601', '20180608', '20180615', '20180622', '20180629']
 
 """
 import sqlite3
@@ -28,29 +35,6 @@ from dateutil.relativedelta import relativedelta
 import os.path
 import sys
 from selenium import webdriver
-
-
-def GET_DATA(arg_stock, arg_date):
-	global err_flag
-	global file
-
-	#檢查資料庫是否已有資料存在，若已有資料則略過，減少網站讀取
-	rt_cnt = CHK_DATA_EXIST(arg_stock[0], arg_date)
-	#print("rt_cnt=" + str(rt_cnt))
-	if rt_cnt == 0:	#確認資料庫無資料，讀取網頁資料
-		rt_flag = GET_WEB_DATA(arg_stock, arg_date)
-
-		if rt_flag == False:
-			err_flag = True
-			print(str(arg_stock) + " 日期" + arg_date + "資料抓取失敗.")
-			file.write(str(arg_stock) + " 日期" + arg_date + "資料抓取失敗.")
-
-		DO_WAIT()	# 避免過度讀取網站，隨機間隔時間再讀取網頁
-
-	else:
-		err_flag = True
-		print(str(arg_stock) + " 日期" + arg_date + "資料已存在，不再重新抓取.\n")
-		#file.write(str(arg_stock) + " 日期" + arg_date + "資料已存在，不再重新抓取.\n")
 
 def DO_WAIT():
 	#隨機等待一段時間
@@ -81,43 +65,90 @@ def GET_DATE_LIST():
 	global err_flag
 	global file
 
+	err_cnt = 0
 	# 取得日期清單
-	try:
-		# 建立網頁讀取
-		#driver = webdriver.Chrome()	# 需要看到執行過程可以用Chrome
-		driver = webdriver.PhantomJS()
-		driver.get("https://www.tdcc.com.tw/smWeb/QryStock.jsp")
+	while True:
+		try:
+			print("抓取日期清單....")
+			# 建立網頁讀取
+			#driver = webdriver.Chrome()	# 需要看到執行過程可以用Chrome
+			driver = webdriver.PhantomJS()
+			driver.get("https://www.tdcc.com.tw/smWeb/QryStock.jsp")
+			time.sleep(1)
 
-		time.sleep(1)
+			dt_obj = driver.find_element_by_id("scaDates")
+			dt_list = []
+			for element in dt_obj.find_elements_by_tag_name('option'):
+				dt_list.append(element.text)
 
-		#html_source = driver.page_source
-		#print(html_source)
+			# 關閉瀏覽器視窗
+			driver.quit()
 
-		dt_obj = driver.find_element_by_id("scaDates")
-		#print(dt_list.text)
+			if len(dt_list) == 0:
+				raise Exception('Err: This is an empty list.')
+			else:
+				dt_list = sorted(dt_list, reverse=False)
+				print("成功抓取日期清單資料.")
+				break
 
-		dt_list = []
-		for element in dt_obj.find_elements_by_tag_name('option'):
-			dt_list.append(element.text)
+		except Exception as e:
+			print("讀取日期清單錯誤，等待重新執行...")
 
-	except Exception as e:
-		err_flag = True
-		print("Err from GET_DATE_LIST(): \n$$$ 集保中心網站讀取錯誤，請確認網頁是否正常. $$$\n" + str(e) + "\n")
-		file.write("Err from GET_DATE_LIST(): \n$$$ 集保中心網站讀取錯誤，請確認網頁是否正常. $$$\n" + str(e) + "\n")
-		return []
+			if err_cnt == 2:
+				err_flag = True
+				print("錯誤次數已達上限，結束本次抓取")
+				print("Err from GET_DATE_LIST(): \n$$$ 集保中心網站讀取錯誤，請確認網頁是否正常. $$$\n" + str(e) + "\n")
+				file.write("Err from GET_DATE_LIST(): \n$$$ 集保中心網站讀取錯誤，請確認網頁是否正常. $$$\n" + str(e) + "\n")
+				raise Exception('錯誤次數已達上限，結束本次抓取')
+			else:
+				print(e.args)
+				print("Err cnt =>" + str(err_cnt))
+				err_cnt += 1
+				DO_WAIT()	#等待一段時間重新執行
 
-	dt_list = sorted(dt_list, reverse=False)
-
-	# 關閉瀏覽器視窗
-	driver.quit()
-	
 	return dt_list
+
+def GET_DATA(arg_stock, arg_date):
+	global err_flag
+	global file
+
+	#檢查資料庫是否已有資料存在，若已有資料則略過，減少網站讀取
+	rt_cnt = CHK_DATA_EXIST(arg_stock[0], arg_date)
+	#print("rt_cnt=" + str(rt_cnt))
+	if rt_cnt == 0:	#確認資料庫無資料，讀取網頁資料
+		retry_cnt = 0
+		while True:
+			try:
+				DO_WAIT()	# 避免過度讀取網站，隨機間隔時間再讀取網頁
+				rt_flag = GET_WEB_DATA(arg_stock, arg_date)
+				#print("retry_cnt=" + str(retry_cnt) + "   rt_flag=" + str(rt_flag))
+				
+				if rt_flag == False:
+					raise Exception(str(arg_stock) + " 日期" + arg_date + "資料抓取失敗，等待一段時間後，重新抓取.")
+				else:
+					print(str(arg_stock) + " 日期" + arg_date + "資料，成功寫入資料庫.")
+					break
+
+			except Exception as e:
+				if retry_cnt == 2:
+					err_flag = True
+					print(str(arg_stock) + " 日期" + arg_date + "資料抓取失敗.\n" + str(e.args) + "\n")
+					file.write(str(arg_stock) + " 日期" + arg_date + "資料抓取失敗.\n" + str(e.args) + "\n")
+					return
+				else:
+					print("retry_cnt=" + str(retry_cnt))
+					#file.write(str(arg_stock) + " 日期" + arg_date + "資料抓取失敗.\n" + str(e.args) + "\n")
+					retry_cnt += 1
+	else:
+		err_flag = True
+		#print(str(arg_stock) + " 日期" + arg_date + "資料已存在，不再重新抓取.\n")
+		#file.write(str(arg_stock) + " 日期" + arg_date + "資料已存在，不再重新抓取.\n")
 
 def GET_WEB_DATA(arg_stock, arg_date):
 	global err_flag
 	global file
 	global conn
-	rt_flag = True
+	rt_flag = False
 
 	sear_comp_id = arg_stock[0]
 	comp_id = arg_stock[0].replace(".TW","")
@@ -146,18 +177,20 @@ def GET_WEB_DATA(arg_stock, arg_date):
 		r.raise_for_status()
 		r.encoding = 'big5'
 		sp = BeautifulSoup(r.text, 'html.parser')
+
 	except Exception as e:
 		err_flag = True
-		rt_flag = False
 		print("Err from GET_WEB_DATA(): \n")
 		print("$$$ 抓取" + sear_comp_id + " " + comp_name + " 日期 " + arg_date + " 集保戶股權分散資料失敗或無資料.$$$\n" + str(e) + "\n")
 		file.write("Err from GET_WEB_DATA(): \n")
 		file.write("$$$ 抓取" + sear_comp_id + " " + comp_name + " 日期 " + arg_date + " 集保戶股權分散資料失敗或無資料.$$$\n" + str(e) + "\n")
-		return rt_flag
+		raise Exception(str(arg_stock) + " 日期" + arg_date + "資料抓取失敗，等待一段時間後，重新抓取. GET_WEB_DATA Sec.1")
 
-	#若有股票代號是查無資料的，則正常結束跳過此代號
+	#若有股票代號是無此資料的，則正常結束跳過此代號
 	t = r.text
-	f_posi = t.find("查無資料!")
+	#print(t)
+	f_posi = t.find("無此資料")
+	#print("f_posi=" + str(f_posi))
 	if f_posi > 0:
 		rt_flag = False
 		print("$$$ 抓取" + sear_comp_id + " " + comp_name + " 日期 " + arg_date + " 集保戶股權分散資料，無此代號資料.$$$\n")
@@ -219,14 +252,15 @@ def GET_WEB_DATA(arg_stock, arg_date):
 			#print(strsql)
 			conn.execute(strsql)
 			conn.commit()
+			rt_flag = True
 		except sqlite3.Error as er:
 			err_flag = True
-			rt_flag = False
 			conn.execute("rollback")
 			print("insert STOCK_DISPERSION er=" + er.args[0])
 			print(strsql)
 			file.write("insert STOCK_DISPERSION er=" + er.args[0] + "\n")
 			file.write(strsql + "\n")
+			raise Exception(str(arg_stock) + " 日期" + arg_date + "資料抓取失敗，等待一段時間後，重新抓取. GET_WEB_DATA Sec.2")
 
 	return rt_flag
 
@@ -282,44 +316,47 @@ def MAIN_GET_TDCC_STOCK_DISPERSION(arg_mode='A'):
 	conn = sqlite3.connect("market_price.sqlite")
 
 	#抓取網站日期清單
-	#dt_list = GET_DATE_LIST()
+	try:
+		dt_list = GET_DATE_LIST()
+		#print(dt_list)
+	except Exception as e:
+		print("抓取日期清單失敗...")
+		print(e.args)
+
+	#dt_list = ['20180323']	#for test 手動用
+
+	if run_mode == "A":
+		dt_list = dt_list[-1:]
+
 	#print(dt_list)
-	dt_list = ['20180323']	#for test 手動用
 
-	#依據所選模式抓取資料
-	if len(dt_list) > 0:
-		#讀取上市櫃股票清單
-		strsql  = "select SEAR_COMP_ID,COMP_NAME, STOCK_TYPE from STOCK_COMP_LIST "
-		strsql += "where SEAR_COMP_ID = '0050.TW' "
-		strsql += "order by STOCK_TYPE, SEAR_COMP_ID "
-		strsql += "limit 1"
+	if err_flag == False:
+		for dt in dt_list:
+			str_date = str(dt)
 
-		cursor = conn.execute(strsql)
-		result = cursor.fetchall()
+			#讀取上市櫃股票清單
+			strsql  = "select STOCK_COMP_LIST.SEAR_COMP_ID, STOCK_COMP_LIST.COMP_NAME, STOCK_COMP_LIST.STOCK_TYPE from STOCK_COMP_LIST "
+			strsql += "LEFT JOIN TDCC_IGNR on TDCC_IGNR.SEAR_COMP_ID = STOCK_COMP_LIST.SEAR_COMP_ID "
+			strsql += "where "
+			#strsql += "SEAR_COMP_ID = '2002A.TW' and "
+			strsql += "STOCK_COMP_LIST.IPO_DATE <= '" + str_date + "' and "
+			strsql += "TDCC_IGNR.SEAR_COMP_ID is NULL "
+			strsql += "order by STOCK_COMP_LIST.STOCK_TYPE, STOCK_COMP_LIST.SEAR_COMP_ID "
+			#strsql += "limit 1"
 
-		#關閉cursor
-		cursor.close()
+			cursor = conn.execute(strsql)
+			result = cursor.fetchall()
 
-		if len(result) > 0:
-			for stock in result:
-				#print(stock)
-				if run_mode == "A":
-					str_date = str(dt_list[-1:][0])
+			#關閉cursor
+			cursor.close()
+
+			if len(result) > 0:
+				for stock in result:
 					GET_DATA(stock, str_date)
-				else:	#模式B:抓取日期清單所有股票資料
-					for dt in dt_list:
-						str_date = str(dt)
-						GET_DATA(stock, str_date)
-		else:
-			err_flag = True
-			print("$$$ 未取得公司清單資料. $$$")
-			file.write("$$$ 未取得公司清單資料. $$$")
-
-	else:
-		err_flag = True
-		print("$$$ 未取得日期清單資料，請確認來源網頁是否正常 $$$")
-		file.write("$$$ 未取得日期清單資料，請確認來源網頁是否正常 $$$")
-
+			else:
+				err_flag = True
+				print("$$$ 未取得公司清單資料. $$$")
+				file.write("$$$ 未取得公司清單資料. $$$")
 
 	tEnd = time.time()#計時結束
 	file.write("\n\n\n結轉耗時 %f sec\n" % (tEnd - tStart)) #會自動做進位
@@ -338,6 +375,4 @@ def MAIN_GET_TDCC_STOCK_DISPERSION(arg_mode='A'):
 	print("\n\n集保中心~集保戶股權分散表查詢，資料抓取結束...\n\n\n")
 
 if __name__ == '__main__':
-	ls = GET_DATE_LIST()
-	print(ls)
-	#MAIN_GET_TDCC_STOCK_DISPERSION()
+	MAIN_GET_TDCC_STOCK_DISPERSION()

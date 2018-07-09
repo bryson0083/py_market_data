@@ -4,9 +4,9 @@
 
 @author: Bryson Xue
 
-@target_rul: 
+@target_rul:
 
-@Note: 
+@Note:
     CSV檔案資料，寫入資料庫
 
 """
@@ -27,9 +27,9 @@ def TSE_QUO_READ_CSV(arg_date):
 	str_date = str(int(arg_date[0:4]) - 1911) + arg_date[4:]
 	str_date = str_date.replace("/","")
 	print("讀取" + str_date + "收盤資料CSV檔案.")
-	
+
 	file_name = "./tse_quo_data/" + str_date + ".csv"
-	
+
 	#判斷CSV檔案是否存在，若無檔案則跳回主程式
 	is_existed = os.path.exists(file_name)
 	if is_existed == False:
@@ -37,17 +37,17 @@ def TSE_QUO_READ_CSV(arg_date):
 		print(arg_date + "無報價CSV檔.\n")
 		file.write(arg_date + "無報價CSV檔.\n")
 		return
-	
+
 	#讀取每日報價CSV檔
 	#with open('1050511.csv', 'r') as f:
 	with open(file_name, 'r') as f:
 		reader = csv.reader(f)
 		quo_list = list(reader)
-	
+
 	#關閉CSV檔案
 	f.close
 	#print(quo_list)
-	
+
 	#檢查檔案當天是否有交易資料，若無交易資料則跳回主程式
 	#(若檔案內容為"當天無收盤資料"，表示當天未開盤)
 	for item in quo_list:
@@ -56,7 +56,7 @@ def TSE_QUO_READ_CSV(arg_date):
 				print(arg_date + "當天未開盤，無交易資料.\n\n")
 				file.write(arg_date + "當天未開盤，無交易資料.\n\n")
 				return
-	
+
 	#取得要讀取的資料起點位置(識別"證券代號")
 	st_idx = 0
 	i = 0
@@ -78,7 +78,7 @@ def TSE_QUO_READ_CSV(arg_date):
 
 		all_data.append(data)
 		idx += 1
-	
+
 	#all_data list拋到pandas
 	df = pd.DataFrame(all_data[1:], columns = all_data[0])
 	df2 = df.loc[:,['證券代號', '證券名稱', '開盤價', '最高價', '最低價', '收盤價', '成交股數', '本益比']]
@@ -86,24 +86,24 @@ def TSE_QUO_READ_CSV(arg_date):
 
 	#寫入、更新資料庫
 	TSE_QUO_DB(df2, arg_date)
-	
+
 def TSE_QUO_DB(arg_df, arg_date):
 	global err_flag
 	global file
 
 	#print(arg_df)
 	quo_date = arg_date.replace("/", "")
-	
+
 	#建立資料庫連線
 	conn = sqlite3.connect("market_price.sqlite")
-	
+
 	commit_flag = "Y"
 	cnt = 0
 	for i in range(0,len(arg_df)):
 		#print(str(df.index[i]))
 		comp_id = str(arg_df.iloc[i][0])
 		comp_id = comp_id.replace('"','').replace("=","").strip() + ".TW"
-		
+
 		comp_name = str(arg_df.iloc[i][1])
 		q_open = arg_df.iloc[i][2].replace('"','').replace(",","").replace("=","").strip()	# 開盤價
 		q_high = arg_df.iloc[i][3].replace('"','').replace(",","").replace("=","").strip()	# 最高價
@@ -111,13 +111,13 @@ def TSE_QUO_DB(arg_df, arg_date):
 		q_close = arg_df.iloc[i][5].replace('"','').replace(",","").replace("=","").strip()	# 收盤價
 		q_vol = arg_df.iloc[i][6].replace('"','').replace(",","").replace("=","").strip()	# 成交量
 		q_per = str(arg_df.iloc[i][7]).replace('"','').replace(",","").replace("=","").strip()	# 本益比
-		
+
 		# 最後維護日期時間
 		str_date = str(datetime.datetime.now())
 		date_last_maint = parser.parse(str_date).strftime("%Y%m%d")
 		time_last_maint = parser.parse(str_date).strftime("%H%M%S")
 		prog_last_maint = "TSE_QUO_CSV"
-		
+
 		#處理若資料為"--"時，給予預設值0
 		if q_open == "--":
 			q_open = 0
@@ -141,11 +141,11 @@ def TSE_QUO_DB(arg_df, arg_date):
 		strsql  = "select count(*) from STOCK_QUO "
 		strsql += "where QUO_DATE = '" + quo_date + "' and "
 		strsql += "SEAR_COMP_ID='" + comp_id + "' "
-		
+
 		#print(strsql + "\n")
 		cursor = conn.execute(strsql)
 		result = cursor.fetchone()
-		
+
 		if result[0] == 0:
 			#print(comp_id + "沒資料\n")
 			# 日報價資料寫入
@@ -168,7 +168,7 @@ def TSE_QUO_DB(arg_df, arg_date):
 				strsql += "'" + time_last_maint + "',"
 				strsql += "'" + prog_last_maint + "' "
 				strsql += ")"
-				
+
 				try:
 					cnt += 1
 					conn.execute(strsql)
@@ -181,7 +181,7 @@ def TSE_QUO_DB(arg_df, arg_date):
 					file.write(comp_id + " " + comp_name + " " + quo_date + "資料寫入異常...Rollback!\n")
 					file.write(strsql + "\n")
 					conn.execute("rollback")
-			
+
 		"""
 		else:
 			#print(comp_id + "有資料\n")
@@ -199,7 +199,7 @@ def TSE_QUO_DB(arg_df, arg_date):
 			strsql += "where "
 			strsql += "QUO_DATE = '" + quo_date + "' and "
 			strsql += "SEAR_COMP_ID='" + comp_id + "' "
-			
+
 			try:
 				conn.execute(strsql)
 			except sqlite3.Error as er:
@@ -216,7 +216,7 @@ def TSE_QUO_DB(arg_df, arg_date):
 
 		#關閉cursor
 		cursor.close()
-		
+
 	# 最後commit
 	if commit_flag == "Y":
 		conn.commit()
@@ -288,11 +288,11 @@ def MAIN_TSE_QUO_READ_CSV():
 			str_date = start_date
 		else:
 			str_date = parser.parse(str(dt)).strftime("%Y/%m/%d")
-			
+
 		#print(str_date + "\n")
 		#讀取日期當天報價CSV檔
 		TSE_QUO_READ_CSV(str_date)
-		
+
 		#日期往後推一天
 		dt = datetime.datetime.strptime(str_date, date_fmt).date()
 		dt = dt + relativedelta(days=1)
