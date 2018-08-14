@@ -30,18 +30,16 @@ def READ_CSV(arg_date):
 	#判斷CSV檔案是否存在，若無檔案則跳回主程式
 	is_existed = os.path.exists(file_name)
 	if is_existed == False:
-		print(arg_date + "無報價CSV檔.\n")
-		file.write(arg_date + "無報價CSV檔.\n")
+		print(arg_date + " 無報價CSV檔.\n")
+		file.write(arg_date + " 無報價CSV檔.\n")
 		return
 	
 	#讀取每日報價CSV檔
 	#with open('1050511.csv', 'r') as f:
-	with open(file_name, 'r') as f:
+	with open(file_name, 'r', encoding='utf-8') as f:
 		reader = csv.reader(f)
 		quo_list = list(reader)
-	
-	#關閉CSV檔案
-	f.close
+
 	#print(quo_list)
 	
 	#檢查檔案當天是否有交易資料，若無交易資料則跳回主程式
@@ -238,8 +236,8 @@ def MAIN_READ_DAILY_FR_HOLDING_SHARES_CSV_SQ():
 	end_date = parser.parse(str(dt)).strftime("%Y%m%d")
 
 	#for需要時手動設定日期區間用
-	#start_date = "20171101"
-	#end_date = "20171127"
+	#start_date = "20180701"
+	#end_date = "20180807"
 
 	# 寫入LOG File
 	str_date = str(datetime.datetime.now())

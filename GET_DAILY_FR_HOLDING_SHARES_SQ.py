@@ -74,7 +74,7 @@ def GET_DATA(arg_date):
 
 			if msg_posi >= 0:
 				# 若當天無資料，還是產生一個檔案
-				file2 = open(file_name, "a", encoding="big5")
+				file2 = open(file_name, "a", encoding="utf-8")
 				file2.write("當天無交易資料")
 				file2.close()
 				return rt_flag
@@ -108,7 +108,7 @@ def GET_DATA(arg_date):
 			#print(df)
 
 			#DataFrame資料寫入csv檔案保存起來
-			df.to_csv(file_name, index=False)
+			df.to_csv(file_name, index=False, encoding='utf-8')
 
 			DO_WAIT()	# 避免過度讀取網站，隨機間隔時間再讀取網頁
 
@@ -179,8 +179,8 @@ def MAIN_GET_DAILY_FR_HOLDING_SHARES_SQ(arg_mode='B'):
 		sys.exit("模式錯誤，結束程式...\n")
 
 	#for需要時手動設定日期區間用(資料最早日期20040801起)
-	#start_date = "20170101"
-	#end_date = "20170615"
+	#start_date = "20180701"
+	#end_date = "20180807"
 
 	print("結轉日期" + start_date + "~" + end_date)
 

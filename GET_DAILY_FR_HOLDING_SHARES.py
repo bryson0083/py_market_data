@@ -40,7 +40,7 @@ def GET_CSV(sear_date):
 	file_name = "./daily_fr_holding_shares/" + sear_date + ".csv"
 	is_existed = os.path.exists(file_name)
 	str_url = "http://www.tse.com.tw/fund/MI_QFIIS?response=csv&date=" + sear_date + "&selectType=ALLBUT0999"
-
+	print(str_url)
 	# 檢查若已有檔案，則不再下載
 	if is_existed == False:
 		headers = {'User-Agent':'User-Agent:Mozilla/5.0 (Macintosh; Intel Mac OS X 10_11_5) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/51.0.2704.106 Safari/537.36'}
@@ -49,7 +49,7 @@ def GET_CSV(sear_date):
 		try:
 			# 讀取查詢頁面
 			r = session.get(str_url, headers=headers)
-			r.encoding = "utf-8"
+			r.encoding = "big5"
 
 			# 取得回傳資料的長度
 			len_r = len(r.text)
@@ -64,11 +64,9 @@ def GET_CSV(sear_date):
 			else:
 				rt_flag = True
 				with open(file_name, 'wb') as f:
-					for chunk in r.iter_content(chunk_size=1024): 
+					for chunk in r.iter_content(chunk_size=1024):
 						if chunk: # filter out keep-alive new chunks
 							f.write(chunk)
-				#close file
-				f.close()
 
 				DO_WAIT()	# 避免過度讀取網站，隨機間隔時間再讀取網頁
 
@@ -140,8 +138,8 @@ def MAIN_GET_DAILY_FR_HOLDING_SHARES(arg_mode='B'):
 		sys.exit("模式錯誤，結束程式...\n")
 
 	#for需要時手動設定日期區間用(資料最早日期20040211起)
-	#start_date = "20170101"
-	#end_date = "20170615"
+	start_date = "20180807"
+	end_date = "20180807"
 
 	print("結轉日期" + start_date + "~" + end_date)
 
