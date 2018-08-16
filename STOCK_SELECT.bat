@@ -1,6 +1,6 @@
 cd /d d:\py_market_data
 
-call activate py34
+call activate py36
 ::chcp 65001
 python STOCK_SELECT_TYPE05.py
 python STOCK_SELECT_TYPE06.py

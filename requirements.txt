@@ -1,0 +1,12 @@
+Cython
+numpy
+matplotlib
+schedule
+selenium
+requests
+pandas
+bs4
+python-firebase
+xlrd
+xlsxwriter
+
