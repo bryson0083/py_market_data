@@ -16,12 +16,6 @@
 	http://www.largitdata.com/course/53/
 	https://stackoverflow.com/questions/2052390/manually-raising-throwing-an-exception-in-python
 
-['20170407', '20170414', '20170421', '20170428', '20170505', '20170512', '20170519', '20170526', '20170603', '20170609', '20170616', '20170623', '20170630', '20170707', 
- '20170714', '20170721', '20170728', '20170804', '20170811', '20170818', '20170825', '20170901', '20170908', '20170915', '20170922', '20170930', '20171006', '20171013', 
- '20171020', '20171027', '20171103', '20171110', '20171117', '20171124', '20171201', '20171208', '20171215', '20171222', '20171229', '20180105', '20180112', '20180119', 
- '20180126', '20180202', '20180209', '20180214', '20180223', '20180302', '20180309', '20180316', '20180323', '20180331', '20180403', '20180413', '20180420', '20180427', 
- '20180504', '20180511', '20180518', '20180525', '20180601', '20180608', '20180615', '20180622', '20180629']
-
 """
 import sqlite3
 import requests
@@ -35,6 +29,7 @@ from dateutil.relativedelta import relativedelta
 import os.path
 import sys
 from selenium import webdriver
+from selenium.webdriver.chrome.options import Options
 
 def DO_WAIT():
 	#隨機等待一段時間
@@ -71,8 +66,11 @@ def GET_DATE_LIST():
 		try:
 			print("抓取日期清單....")
 			# 建立網頁讀取
-			#driver = webdriver.Chrome()	# 需要看到執行過程可以用Chrome
-			driver = webdriver.PhantomJS()
+			chrome_options = Options()
+			chrome_options.add_argument('--headless')
+			chrome_options.add_argument('--disable-gpu')
+			driver = webdriver.Chrome(chrome_options=chrome_options)	# 不需要看到執行過程
+			#driver = webdriver.Chrome()  # 需要看到執行過程
 			driver.get("https://www.tdcc.com.tw/smWeb/QryStock.jsp")
 			time.sleep(1)
 
@@ -155,7 +153,8 @@ def GET_WEB_DATA(arg_stock, arg_date):
 	comp_name = arg_stock[1]
 	print("\n抓取" + sear_comp_id + " " + comp_name + " 日期" + arg_date + "集保戶股權分散資料.")
 
-	headers = {'User-Agent':'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/58.0.3029.110 Safari/537.36'}
+	headers = {
+		'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/68.0.3440.106 Safari/537.36'}
 	s = requests.session()
 
 	payload = {
@@ -172,7 +171,7 @@ def GET_WEB_DATA(arg_stock, arg_date):
 
 	# 拋送查詢條件到頁面，並取回查詢結果內容
 	try:
-		URL = 'http://www.tdcc.com.tw/smWeb/QryStockAjax.do'
+		URL = 'https://www.tdcc.com.tw/smWeb/QryStockAjax.do'
 		r = s.post(URL, data=payload, headers=headers)
 		r.raise_for_status()
 		r.encoding = 'big5'
@@ -222,7 +221,8 @@ def GET_WEB_DATA(arg_stock, arg_date):
 	df['PROG_LAST_MAINT'] = prog_last_maint
 
 	colorder = ('QUO_DATE', 'SEAR_COMP_ID', 'COMP_NAME', 'SEQ', 'LV_DESC', 'NUM_OF_PEOPLE', 'STOCK_SHARES', 'PER_CENT_RT', 'DATE_LAST_MAINT', 'TIME_LAST_MAINT', 'PROG_LAST_MAINT')
-	df = df.reindex_axis(colorder, axis=1)	#調整datagrame欄位順序	http://nullege.com/codes/search/pandas.DataFrame.reindex_axis
+	#df = df.reindex_axis(colorder, axis=1)	#調整datagrame欄位順序	http://nullege.com/codes/search/pandas.DataFrame.reindex_axis
+	df = df.reindex(colorder, axis=1)	#調整datagrame欄位順序	http://nullege.com/codes/search/pandas.DataFrame.reindex_axis
 	#df.to_sql(name='STOCK_DISPERSION', con=conn, index=False, if_exists='replace')
 	#print(df)
 
@@ -323,7 +323,7 @@ def MAIN_GET_TDCC_STOCK_DISPERSION(arg_mode='A'):
 		print("抓取日期清單失敗...")
 		print(e.args)
 
-	#dt_list = ['20180323']	#for test 手動用
+	#dt_list = ['20180817']	#for test 手動用
 
 	if run_mode == "A":
 		dt_list = dt_list[-1:]
@@ -338,7 +338,7 @@ def MAIN_GET_TDCC_STOCK_DISPERSION(arg_mode='A'):
 			strsql  = "select STOCK_COMP_LIST.SEAR_COMP_ID, STOCK_COMP_LIST.COMP_NAME, STOCK_COMP_LIST.STOCK_TYPE from STOCK_COMP_LIST "
 			strsql += "LEFT JOIN TDCC_IGNR on TDCC_IGNR.SEAR_COMP_ID = STOCK_COMP_LIST.SEAR_COMP_ID "
 			strsql += "where "
-			#strsql += "SEAR_COMP_ID = '2002A.TW' and "
+			#strsql += "STOCK_COMP_LIST.SEAR_COMP_ID = '0050.TW' and "
 			strsql += "STOCK_COMP_LIST.IPO_DATE <= '" + str_date + "' and "
 			strsql += "TDCC_IGNR.SEAR_COMP_ID is NULL "
 			strsql += "order by STOCK_COMP_LIST.STOCK_TYPE, STOCK_COMP_LIST.SEAR_COMP_ID "
