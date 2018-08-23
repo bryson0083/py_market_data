@@ -72,7 +72,7 @@ def GET_DATE_LIST():
 			driver = webdriver.Chrome(chrome_options=chrome_options)	# 不需要看到執行過程
 			#driver = webdriver.Chrome()  # 需要看到執行過程
 			driver.get("https://www.tdcc.com.tw/smWeb/QryStock.jsp")
-			time.sleep(1)
+			time.sleep(5)
 
 			dt_obj = driver.find_element_by_id("scaDates")
 			dt_list = []
@@ -90,6 +90,7 @@ def GET_DATE_LIST():
 				break
 
 		except Exception as e:
+			driver.quit()
 			print("讀取日期清單錯誤，等待重新執行...")
 
 			if err_cnt == 2:
