@@ -37,7 +37,7 @@ def DailyQuoCSV(sear_date):
 			headers = {'User-Agent':'User-Agent:Mozilla/5.0 (Macintosh; Intel Mac OS X 10_11_5) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/51.0.2704.106 Safari/537.36'}
 			session = requests.session()
 
-			str_url = "http://www.tse.com.tw/exchangeReport/MI_INDEX?response=csv&date=" + sear_date + "&type=ALLBUT0999"
+			str_url = "http://www.twse.com.tw/exchangeReport/MI_INDEX?response=csv&date=" + sear_date + "&type=ALLBUT0999"
 			#print(str_url)
 
 			# 讀取查詢頁面
