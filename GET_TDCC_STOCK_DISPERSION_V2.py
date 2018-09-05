@@ -198,7 +198,7 @@ def trans_dt_range_tdcc(arg_start_dt, arg_end_dt):
 		else:
 			print(file_name + "結轉失敗.")
 
-def MAIN_GET_TDCC():
+def MAIN_GET_TDCC(arg_mode='A'):
 	global conn
 	global err_flag
 	global log_file
