@@ -117,7 +117,7 @@ def store_db(arg_file_name):
 	str_date = str(datetime.datetime.now())
 	df['DATE_LAST_MAINT'] = parser.parse(str_date).strftime("%Y%m%d")
 	df['TIME_LAST_MAINT'] = parser.parse(str_date).strftime("%H%M%S")
-	df['PROG_LAST_MAINT'] = "GET_TDCC_STOCK_DISPERSION"
+	df['PROG_LAST_MAINT'] = "GET_TDCC_STOCK_DISPERSION_V2"
 
 	colorder = ('QUO_DATE', 'SEAR_COMP_ID', 'COMP_NAME', 'SEQ', 'NUM_OF_PEOPLE', 'STOCK_SHARES',
 	            'PER_CENT_RT', 'LV_DESC', 'DATE_LAST_MAINT', 'TIME_LAST_MAINT', 'PROG_LAST_MAINT')
@@ -126,7 +126,7 @@ def store_db(arg_file_name):
 	#print(df.head(20))
 
 	try:
-		df.to_sql("STOCK_DISPERSION", conn, if_exists="replace", index=False)
+		df.to_sql("STOCK_DISPERSION", conn, if_exists="append", index=False)
 	except Exception as e:
 		rt_flag = False
 		err_flag = True
