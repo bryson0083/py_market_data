@@ -170,7 +170,6 @@ def trans_uptodate_tdcc():
 		print("無TDCC_OD_1-5.csv資料檔案存在.")
 		log_file.write("無TDCC_OD_1-5.csv資料檔案存在.")
 
-
 def find_file(arg_start_dt, arg_end_dt):
 	pattern = '*.csv'
 	cwd = os.getcwd()
@@ -190,15 +189,18 @@ def trans_dt_range_tdcc(arg_start_dt, arg_end_dt):
 	file_result = find_file(arg_start_dt, arg_end_dt)
 	#print(file_result)
 
-	for file_name in file_result:
-		rt_flag = store_db(file_name)
+	if len(file_result) > 0:
+		for file_name in file_result:
+			rt_flag = store_db(file_name)
 
-		if rt_flag:
-			print(file_name + "結轉完畢.")
-		else:
-			print(file_name + "結轉失敗.")
+			if rt_flag:
+				print(file_name + "結轉完畢.")
+			else:
+				print(file_name + "結轉失敗.") 
+	else:
+		print("無日期區間資料檔.")
 
-def MAIN_GET_TDCC(arg_mode='A'):
+def MAIN_GET_TDCC(task_mode='A'):
 	global conn
 	global err_flag
 	global log_file
@@ -228,15 +230,7 @@ def MAIN_GET_TDCC(arg_mode='A'):
 	#建立資料庫連線
 	conn = sqlite3.connect('market_price.sqlite')
 
-	#依據所選模式，決定結轉方式
-	if len(sys.argv) > 1:
-		task_mode = sys.argv[1]
-	else:
-		task_mode = input("task mode(A:下載並結轉最新資料, B:輸入起訖日期區間結轉資料):")
-		
-	task_mode = task_mode.upper()
 	print("task mode: " + task_mode)
-
 	if task_mode == "A":
 		#下載資料檔
 		download_tdcc_file()
@@ -265,4 +259,11 @@ def MAIN_GET_TDCC(arg_mode='A'):
 	print("\n\n集保中心~集保戶股權分散表查詢，資料抓取結束...\n\n\n")
 
 if __name__ == "__main__":
-	MAIN_GET_TDCC()
+	#依據所選模式，決定結轉方式
+	if len(sys.argv) > 1:
+		task_mode = sys.argv[1]
+	else:
+		task_mode = input("task mode(A:下載並結轉最新資料, B:輸入起訖日期區間結轉資料):")
+
+	task_mode = task_mode.upper()
+	MAIN_GET_TDCC(task_mode)
