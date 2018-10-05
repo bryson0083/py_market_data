@@ -49,6 +49,7 @@ import MOVE_FILE as mv_file
 import CK_OPEN as ck_open
 import DAILY_MAIL as dmail
 import GET_TDCC_STOCK_DISPERSION as tdcc
+import GET_TDCC_STOCK_DISPERSION_V2 as tdcc2
 
 def job():
 	global task_mode
@@ -113,6 +114,11 @@ def job4():
 def job5():
 	str_date = str(datetime.datetime.now())
 	print("執行job 5: 目前時間:" + str_date + "\n")
+	tdcc2.MAIN_GET_TDCC('A')
+
+def job6():
+	str_date = str(datetime.datetime.now())
+	print("執行job 6: 目前時間:" + str_date + "\n")
 	tdcc.MAIN_GET_TDCC_STOCK_DISPERSION('A')
 
 if __name__ == '__main__':
@@ -162,6 +168,8 @@ if __name__ == '__main__':
 	#上市櫃，集保中心~集保戶股權分散表查詢，資料抓取(當周資料要周六後才會有)
 	schedule.every().saturday.at("17:00").do(job5)
 	schedule.every().sunday.at("17:00").do(job5)
+	schedule.every().saturday.at("18:00").do(job6)
+	schedule.every().sunday.at("18:00").do(job6)
 
 	while True:
 		schedule.run_pending()

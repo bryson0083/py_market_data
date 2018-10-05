@@ -138,8 +138,8 @@ def MAIN_GET_DAILY_FR_HOLDING_SHARES(arg_mode='B'):
 		sys.exit("模式錯誤，結束程式...\n")
 
 	#for需要時手動設定日期區間用(資料最早日期20040211起)
-	start_date = "20180807"
-	end_date = "20180807"
+	#start_date = "20180815"
+	#end_date = "20181005"
 
 	print("結轉日期" + start_date + "~" + end_date)
 

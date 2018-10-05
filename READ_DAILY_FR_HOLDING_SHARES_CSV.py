@@ -236,8 +236,8 @@ def MAIN_READ_DAILY_FR_HOLDING_SHARES_CSV():
 	end_date = parser.parse(str(dt)).strftime("%Y%m%d")
 
 	#for需要時手動設定日期區間用
-	#start_date = "20171101"
-	#end_date = "20171127"
+	#start_date = "20180815"
+	#end_date = "20181005"
 
 	# 寫入LOG File
 	str_date = str(datetime.datetime.now())
